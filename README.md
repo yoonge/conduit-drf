@@ -1,11 +1,11 @@
-# Conduit Django REST Framework
+# ⌨️ Conduit Django REST Framework
 
 Realworld: "The mother of all demo apps" — Exemplary back-end Medium.com clone (called [Conduit](https://github.com/yoonge/conduit-drf)), built with Django + DRF + MySQL + MySQLClient + PDM.
 
 ![pdm-managed](https://img.shields.io/badge/pdm-managed-blueviolet)
 ![Django Badge](https://img.shields.io/badge/django-4?logo=django&labelColor=%23092E20&color=white)
 
-## Use this template
+## 💡 Use this template
 
 ```sh
 $ pdm init django
@@ -19,7 +19,7 @@ $ pdm init -p django_project django
 
 Visit https://localhost:8000 to see the welcome page.
 
-## Development
+## 🔰 Development
 
 Create a new app:
 
@@ -45,7 +45,7 @@ Call other `manage.py` commands:
 $ pdm run manage.py <command> [options]
 ```
 
-## License
+## 📄 License
 
 This project is licensed under the terms of the MIT license.
 
@@ -88,7 +88,7 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     # "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
+    # "django.middleware.csrf.CsrfViewMiddleware",
     # "django.contrib.auth.middleware.AuthenticationMiddleware",
     # "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
