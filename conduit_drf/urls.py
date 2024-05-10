@@ -19,6 +19,8 @@ from django.urls import path
 from api import views
 
 urlpatterns = [
+    # path("", include_docs_urls()),
     # path("admin/", admin.site.urls),
-    path("home", views.HomeView.as_view()),
+    path("api/home", views.HomeView.as_view()),
+    path("api/user", views.UserView.as_view()),
 ]
