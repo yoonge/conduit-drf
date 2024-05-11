@@ -1,38 +1,169 @@
-from rest_framework import serializers, status
-from rest_framework.views import APIView
+from rest_framework import serializers
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from api import models
-from utils.hook import HookSerializer
+from api.utils.hook import HookSerializer
+from api.utils.pagination import CustomPagination
 
 class UserSerializer(HookSerializer, serializers.ModelSerializer):
-    create_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
-    # gender = serializers.CharField(source='get_gender_display', read_only=True)
-    update_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
-
     class Meta:
         model = models.User
-        # fields = ["_id", "avatar", "bio", "birthday", "create_at", "email", "gender", "job", "nickname", "password", "phone", "update_at", "username"]
+        # fields = [
+        #     "_id", "avatar", "bio", "birthday", "create_at", "email", "gender",
+        #     "job", "nickname", "password", "phone", "update_at", "username"
+        # ]
         fields = "__all__"
+        extra_kwargs = {
+            "create_at": { "format": "%Y-%m-%d %H:%M:%S", "read_only": True },
+            "password": { "write_only": True },
+            "update_at": { "format": "%Y-%m-%d %H:%M:%S", "read_only": True },
+        }
 
     def hk_gender(self, obj):
         return obj.get_gender_display()
 
-# Create your views here.
-class HomeView(APIView):
-    def get(self, request):
-        return Response({"message": "Hello, world!"})
+class TagSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Tag
+        fields = "__all__"
+        extra_kwargs = {
+            "create_at": { "format": "%Y-%m-%d %H:%M:%S", "read_only": True },
+        }
 
+class TopicSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
+    tags = TagSerializer(many=True)
+    class Meta:
+        model = models.Topic
+        fields = "__all__"
+        extra_kwargs = {
+            "create_at": { "format": "%Y-%m-%d %H:%M:%S", "read_only": True },
+            "update_at": { "format": "%Y-%m-%d %H:%M:%S", "read_only": True },
+        }
 
-class UserView(APIView):
-    def get(self, request):
-        users = models.User.objects.all()
-        serializer = UserSerializer(users, many=True)
-        return Response(serializer.data)
+class TopicListView(APIView):
+    """
+    GET:
+    Return a list of all the topics.
 
-    def post(self, request):
-        serializer = UserSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
+    POST:
+    Create a new topic instance.
+    """
+    def get(self, request, *args, **kwargs):
+        topics_all = models.Topic.objects.all().order_by("-create_at")
+        total = models.Topic.objects.count()
+        page = CustomPagination()
+        topics = page.paginate_queryset(topics_all, request)
+        ser = TopicSerializer(topics, many=True)
+        return page.get_paginated_response(ser.data, msg="Topics query succeed.", total=total)
+
+    def post(self, request, *args, **kwargs):
+        ser = TopicSerializer(data=request.data)
+        if ser.is_valid():
+            ser.save()
+            res = { "data": ser.data, "msg": "Topic create succeed." }
+            return Response(res)
         else:
-            return Response(serializer.errors)
+            res = { "data": ser.errors, "msg": "Topic create failed." }
+            return Response(res)
+
+class TopicDetailView(APIView):
+    """
+    GET:
+    Return a single topic instance.
+
+    PUT:
+    Update a topic instance.
+
+    DELETE:
+    Delete a topic instance.
+    """
+    def get(self, request, *args, **kwargs):
+        _id = kwargs.get("_id")
+        topic = models.Topic.objects.get(_id=_id)
+        ser = TopicSerializer(topic)
+        res = { "data": ser.data, "msg": "Topic query succeed." }
+        return Response(res)
+
+    def put(self, request, *args, **kwargs):
+        _id = kwargs.get("_id")
+        topic = models.Topic.objects.get(_id=_id)
+        ser = TopicSerializer(topic, data=request.data)
+        if ser.is_valid():
+            ser.save()
+            res = { "data": ser.data, "msg": "Topic update succeed." }
+            return Response(res)
+        else:
+            res = { "data": ser.errors, "msg": "Topic update failed." }
+            return Response(ser.errors)
+
+    def delete(self, request, *args, **kwargs):
+        _id = kwargs.get("_id")
+        topic = models.Topic.objects.get(_id=_id)
+        topic.delete()
+        res = { "data": None, "msg": "Topic delete succeed." }
+        return Response(res)
+
+class UserListView(APIView):
+    """
+    GET:
+    Return a list of all the users.
+
+    POST:
+    Create a new user instance.
+    """
+    def get(self, request, *args, **kwargs):
+        users_all = models.User.objects.all().order_by("-create_at")
+        total = models.User.objects.count()
+        page = CustomPagination()
+        users = page.paginate_queryset(users_all, request)
+        ser = UserSerializer(users, many=True)
+        return page.get_paginated_response(ser.data, msg="Users query succeed.", total=total)
+
+    def post(self, request, *args, **kwargs):
+        ser = UserSerializer(data=request.data)
+        if ser.is_valid():
+            ser.save()
+            res = { "data": ser.data, "msg": "User create succeed." }
+            return Response(res)
+        else:
+            res = { "data": ser.errors, "msg": "User create failed." }
+            return Response(res)
+
+class UserDetailView(APIView):
+    """
+    GET:
+    Return a single user instance.
+
+    PUT:
+    Update a user instance.
+
+    DELETE:
+    Delete a user instance.
+    """
+    def get(self, request, *args, **kwargs):
+        username = kwargs.get("username")
+        user = models.User.objects.get(username=username)
+        ser = UserSerializer(user)
+        res = { "data": ser.data, "msg": "User query succeed." }
+        return Response(res)
+
+    def put(self, request, *args, **kwargs):
+        username = kwargs.get("username")
+        user = models.User.objects.get(username=username)
+        ser = UserSerializer(user, data=request.data)
+        if ser.is_valid():
+            ser.save()
+            res = { "data": ser.data, "msg": "User update succeed." }
+            return Response(res)
+        else:
+            res = { "data": ser.errors, "msg": "User update failed." }
+            return Response(res)
+
+    def delete(self, request, *args, **kwargs):
+        username = kwargs.get("username")
+        user = models.User.objects.get(username=username)
+        user.delete()
+        res = { "data": None, "msg": "User delete succeed." }
+        return Response(res)
+
