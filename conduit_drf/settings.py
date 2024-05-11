@@ -118,7 +118,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = "UTC"
+TIME_ZONE = "Asia/Shanghai"
 
 USE_I18N = True
 
@@ -139,4 +139,6 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # REST framework
 REST_FRAMEWORK = {
     "UNAUTHENTICATED_USER": None,
+    # "DEFAULT_SCHEMA_CLASS": "rest_framework.schemas.AutoSchema",
+    "DEFAULT_PAGINATION_CLASS": "api.utils.pagination.CustomPagination",
 }
