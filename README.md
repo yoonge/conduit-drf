@@ -71,6 +71,8 @@ $ py manage.py startapp api
 $ pdm add djangorestframework
 ```
 
+### `settings.py`
+
 ```py
 # Application definition
 
@@ -114,8 +116,16 @@ TEMPLATES = [
 
 # ...
 
+TIME_ZONE = "Asia/Shanghai"
+
+# ...
+
 # REST framework
 REST_FRAMEWORK = {
     "UNAUTHENTICATED_USER": None,
+    "DEFAULT_PAGINATION_CLASS": "api.utils.pagination.CustomPagination",
 }
+
+APPEND_SLASH = False
+# SILENCED_SYSTEM_CHECKS = ['urls.W002']
 ```
