@@ -10,4 +10,5 @@ urlpatterns = [
     re_path(r"^/topic/(?P<_id>\d+)$", views.TopicDetailView.as_view()),
     path("/user", views.UserListView.as_view()),
     path("/user/<str:username>", views.UserDetailView.as_view()),
+    path("/settings", views.UserSettingsView.as_view()),
 ]

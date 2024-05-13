@@ -9,13 +9,17 @@ class CustomPagination(PageNumberPagination):
     def get_paginated_response(self, data, *args, **kwargs):
         msg = kwargs.get("msg")
         total = kwargs.get("total")
-        user = kwargs.get("user")
-        return Response({
+        res = {
             "count": self.page.paginator.count,
             "data": data,
             "msg": msg,
             "next": self.get_next_link(),
             "prev": self.get_previous_link(),
             "total": total,
-            "user": user
-        })
+        }
+
+        user = kwargs.get("user")
+        if user:
+            res["user"] = user
+
+        return Response(res)

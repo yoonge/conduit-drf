@@ -32,12 +32,13 @@ ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     # "django.contrib.admin",
-    # "django.contrib.auth",
-    # "django.contrib.contenttypes",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
     # "django.contrib.sessions",
     # "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
+    "rest_framework_simplejwt",
     "api",
 ]
 
@@ -139,9 +140,20 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # REST framework
 
 REST_FRAMEWORK = {
-    "UNAUTHENTICATED_USER": None,
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
     "DEFAULT_PAGINATION_CLASS": "api.utils.pagination.CustomPagination",
+    "UNAUTHENTICATED_USER": None,
 }
 
 APPEND_SLASH = False
 # SILENCED_SYSTEM_CHECKS = ['urls.W002']
+
+
+# DRF Simple JWT
+
+SIMPLE_JWT = {
+    "USER_ID_FIELD": "_id",
+    "TOKEN_OBTAIN_SERIALIZER": "api.serializers.MyTokenObtainSerializer",
+}
