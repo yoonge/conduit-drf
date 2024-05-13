@@ -1,45 +1,8 @@
-from rest_framework import serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from api import models
-from api.utils.hook import HookSerializer
+from api.serializers import UserSerializer, TagSerializer, TopicSerializer
 from api.utils.pagination import CustomPagination
-
-class UserSerializer(HookSerializer, serializers.ModelSerializer):
-    class Meta:
-        model = models.User
-        # fields = [
-        #     "_id", "avatar", "bio", "birthday", "create_at", "email", "gender",
-        #     "job", "nickname", "password", "phone", "update_at", "username"
-        # ]
-        fields = "__all__"
-        extra_kwargs = {
-            "create_at": { "format": "%Y-%m-%d %H:%M:%S", "read_only": True },
-            "password": { "write_only": True },
-            "update_at": { "format": "%Y-%m-%d %H:%M:%S", "read_only": True },
-        }
-
-    def hk_gender(self, obj):
-        return obj.get_gender_display()
-
-class TagSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.Tag
-        fields = "__all__"
-        extra_kwargs = {
-            "create_at": { "format": "%Y-%m-%d %H:%M:%S", "read_only": True },
-        }
-
-class TopicSerializer(serializers.ModelSerializer):
-    user = UserSerializer()
-    tags = TagSerializer(many=True)
-    class Meta:
-        model = models.Topic
-        fields = "__all__"
-        extra_kwargs = {
-            "create_at": { "format": "%Y-%m-%d %H:%M:%S", "read_only": True },
-            "update_at": { "format": "%Y-%m-%d %H:%M:%S", "read_only": True },
-        }
 
 def fetch_topics(request, username = None, favor = False):
     if username is not None:
@@ -188,7 +151,7 @@ class UserDetailView(APIView):
         username = kwargs.get("username")
         user = models.User.objects.get(username=username)
         ser = UserSerializer(user)
-        res = { "data": ser.data, "msg": "User query succeed." }
+        res = { "data": ser.data, "msg": "User info query succeed." }
         return Response(res)
 
     def put(self, request, *args, **kwargs):
@@ -197,10 +160,10 @@ class UserDetailView(APIView):
         ser = UserSerializer(user, data=request.data)
         if ser.is_valid():
             ser.save()
-            res = { "data": ser.data, "msg": "User update succeed." }
+            res = { "data": ser.data, "msg": "User info update succeed." }
             return Response(res)
         else:
-            res = { "data": ser.errors, "msg": "User update failed." }
+            res = { "data": ser.errors, "msg": "User info update failed." }
             return Response(res)
 
     def delete(self, request, *args, **kwargs):
@@ -210,3 +173,27 @@ class UserDetailView(APIView):
         res = { "data": None, "msg": "User delete succeed." }
         return Response(res)
 
+class UserSettingsView(APIView):
+    """
+    GET:
+    Return current user instance.
+
+    PUT:
+    Update current user instance.
+    """
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        ser = UserSerializer(user)
+        res = { "data": ser.data, "msg": "User settings query succeed." }
+        return Response(res)
+
+    def put(self, request, *args, **kwargs):
+        user = request.user
+        ser = UserSerializer(user, data=request.data)
+        if ser.is_valid():
+            ser.save()
+            res = { "data": ser.data, "msg": "User settings update succeed." }
+            return Response(res)
+        else:
+            res = { "data": ser.errors, "msg": "User settings update failed." }
+            return Response(res)
