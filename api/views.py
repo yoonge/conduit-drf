@@ -1,3 +1,4 @@
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from api import models
@@ -35,6 +36,8 @@ class TopicListView(APIView):
     POST:
     Create a new topic instance.
     """
+    permission_classes = [IsAuthenticatedOrReadOnly, ]
+
     def get(self, request, *args, **kwargs):
         topics_all = models.Topic.objects.all().order_by("-create_at")
         total = models.Topic.objects.count()
@@ -61,7 +64,7 @@ class UserTopicListView(APIView):
     def get(self, request, *args, **kwargs):
         username = kwargs.get("username")
         (page, data, total, user) = fetch_topics(request, username)
-        return page.get_paginated_response(data, msg="User topics query succeed.", total=total, user=user)
+        return page.get_paginated_response(data, msg="User's own topics query succeed.", total=total, user=user)
 
 class FavoriteTopicListView(APIView):
     """
@@ -71,7 +74,7 @@ class FavoriteTopicListView(APIView):
     def get(self, request, *args, **kwargs):
         username = kwargs.get("username")
         (page, data, total, user) = fetch_topics(request, username, True)
-        return page.get_paginated_response(data, msg="User topics query succeed.", total=total, user=user)
+        return page.get_paginated_response(data, msg="User's favorite topics query succeed.", total=total, user=user)
 
 class TopicDetailView(APIView):
     """
@@ -84,6 +87,8 @@ class TopicDetailView(APIView):
     DELETE:
     Delete a topic instance.
     """
+    permission_classes = [IsAuthenticatedOrReadOnly, ]
+
     def get(self, request, *args, **kwargs):
         _id = kwargs.get("_id")
         topic = models.Topic.objects.get(_id=_id)

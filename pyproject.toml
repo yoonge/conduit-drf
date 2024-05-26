@@ -18,6 +18,7 @@ license = {text = "MIT"}
 [tool.pdm]
 distribution = false
 [tool.pdm.scripts]
+createsuperuser = "python manage.py createsuperuser"
 makemigrations = "python manage.py makemigrations"
 migrate = "python manage.py migrate"
 startapp = "python manage.py startapp"

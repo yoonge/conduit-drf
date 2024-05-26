@@ -1,3 +1,4 @@
+from typing import Any, Dict
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from api import models
@@ -7,8 +8,18 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
-        token['username'] = user.username
+        token["username"] = user.username
         return token
+
+    def validate(self, attrs: Dict[str, Any]) -> Dict[str, str]:
+        default_data = super().validate(attrs)
+        res = {
+            "access": default_data["access"],
+            "msg": "Login succeed.",
+            "refresh": default_data["refresh"],
+            "user": UserSerializer(self.user).data
+        }
+        return res
 
 class UserSerializer(HookSerializer, serializers.ModelSerializer):
     class Meta:
