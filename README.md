@@ -114,18 +114,41 @@ TEMPLATES = [
     },
 ]
 
+
 # ...
+
+
+# LANGUAGE_CODE = "zh-hans"
 
 TIME_ZONE = "Asia/Shanghai"
 
+
 # ...
 
-# REST framework
-REST_FRAMEWORK = {
-    "UNAUTHENTICATED_USER": None,
-    "DEFAULT_PAGINATION_CLASS": "api.utils.pagination.CustomPagination",
-}
 
 APPEND_SLASH = False
 # SILENCED_SYSTEM_CHECKS = ['urls.W002']
+
+
+# REST framework
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+    ),
+    "DEFAULT_PAGINATION_CLASS": "api.utils.pagination.CustomPagination",
+    "DEFAULT_PERMISSION_CLASSES": (
+        "rest_framework.permissions.IsAuthenticated",
+    ),
+    "UNAUTHENTICATED_USER": None,
+}
+
+
+# DRF Simple JWT
+
+SIMPLE_JWT = {
+    "USER_ID_FIELD": "_id",
+    "TOKEN_OBTAIN_SERIALIZER": "api.serializers.MyTokenObtainPairSerializer",
+}
 ```
