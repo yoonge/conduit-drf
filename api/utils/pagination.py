@@ -1,3 +1,4 @@
+from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
@@ -10,6 +11,7 @@ class CustomPagination(PageNumberPagination):
         msg = kwargs.get("msg")
         total = kwargs.get("total")
         res = {
+            "code": status.HTTP_200_OK,
             "count": self.page.paginator.count,
             "data": data,
             "msg": msg,

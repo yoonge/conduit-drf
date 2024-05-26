@@ -1,9 +1,24 @@
+from rest_framework import status
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from rest_framework.views import APIView
+from rest_framework.reverse import reverse
+from rest_framework.viewsets import ViewSet
 from api import models
 from api.serializers import UserSerializer, TagSerializer, TopicSerializer
 from api.utils.pagination import CustomPagination
+
+@api_view(["GET"])
+@permission_classes((IsAuthenticatedOrReadOnly,))
+def api_root(request, format=None):
+    """
+    API root.
+    """
+    return Response({
+        "tags": reverse("tag-list", request=request, format=format),
+        "topics": reverse("topic-list", request=request, format=format),
+        "users": reverse("user-list", request=request, format=format),
+    })
 
 def fetch_topics(request, username = None, favor = False):
     if username is not None:
@@ -28,17 +43,25 @@ def fetch_topics(request, username = None, favor = False):
     ser_user = UserSerializer(user)
     return (page, ser_topics.data, total, ser_user.data)
 
-class TopicListView(APIView):
+class TagViewSet(ViewSet):
     """
-    GET:
-    Return a list of all the topics.
-
-    POST:
-    Create a new topic instance.
+    A simple ViewSet for listing or retrieving tags.
     """
-    permission_classes = [IsAuthenticatedOrReadOnly, ]
+    permission_classes = (IsAuthenticatedOrReadOnly, )
 
-    def get(self, request, *args, **kwargs):
+    def list(self, request, *args, **kwargs):
+        tags = models.Tag.objects.all().order_by("-create_at")
+        total = models.Tag.objects.count()
+        ser = TagSerializer(tags, many=True)
+        return Response({ "code": status.HTTP_200_OK, "data": ser.data, "msg": "Tags query succeed.", "total": total })
+
+class TopicViewSet(ViewSet):
+    """
+    A simple ViewSet for listing or retrieving topics.
+    """
+    permission_classes = (IsAuthenticatedOrReadOnly, )
+
+    def list(self, request):
         topics_all = models.Topic.objects.all().order_by("-create_at")
         total = models.Topic.objects.count()
         page = CustomPagination()
@@ -46,84 +69,16 @@ class TopicListView(APIView):
         ser = TopicSerializer(topics, many=True)
         return page.get_paginated_response(ser.data, msg="Topics query succeed.", total=total)
 
-    def post(self, request, *args, **kwargs):
-        ser = TopicSerializer(data=request.data)
-        if ser.is_valid():
-            ser.save()
-            res = { "data": ser.data, "msg": "Topic create succeed." }
-            return Response(res)
-        else:
-            res = { "data": ser.errors, "msg": "Topic create failed." }
-            return Response(res)
-
-class UserTopicListView(APIView):
-    """
-    GET:
-    Return a list of user's own topics.
-    """
-    def get(self, request, *args, **kwargs):
-        username = kwargs.get("username")
-        (page, data, total, user) = fetch_topics(request, username)
-        return page.get_paginated_response(data, msg="User's own topics query succeed.", total=total, user=user)
-
-class FavoriteTopicListView(APIView):
-    """
-    GET:
-    Return a list of user's favorite topics.
-    """
-    def get(self, request, *args, **kwargs):
-        username = kwargs.get("username")
-        (page, data, total, user) = fetch_topics(request, username, True)
-        return page.get_paginated_response(data, msg="User's favorite topics query succeed.", total=total, user=user)
-
-class TopicDetailView(APIView):
-    """
-    GET:
-    Return a single topic instance.
-
-    PUT:
-    Update a topic instance.
-
-    DELETE:
-    Delete a topic instance.
-    """
-    permission_classes = [IsAuthenticatedOrReadOnly, ]
-
-    def get(self, request, *args, **kwargs):
-        _id = kwargs.get("_id")
-        topic = models.Topic.objects.get(_id=_id)
+    def retrieve(self, request, pk=None):
+        topic = models.Topic.objects.get(pk=pk)
         ser = TopicSerializer(topic)
-        res = { "data": ser.data, "msg": "Topic query succeed." }
-        return Response(res)
+        return Response({ "code": status.HTTP_200_OK, "data": ser.data, "msg": "Topic query succeed." })
 
-    def put(self, request, *args, **kwargs):
-        _id = kwargs.get("_id")
-        topic = models.Topic.objects.get(_id=_id)
-        ser = TopicSerializer(topic, data=request.data)
-        if ser.is_valid():
-            ser.save()
-            res = { "data": ser.data, "msg": "Topic update succeed." }
-            return Response(res)
-        else:
-            res = { "data": ser.errors, "msg": "Topic update failed." }
-            return Response(ser.errors)
-
-    def delete(self, request, *args, **kwargs):
-        _id = kwargs.get("_id")
-        topic = models.Topic.objects.get(_id=_id)
-        topic.delete()
-        res = { "data": None, "msg": "Topic delete succeed." }
-        return Response(res)
-
-class UserListView(APIView):
+class UserViewSet(ViewSet):
     """
-    GET:
-    Return a list of all the users.
-
-    POST:
-    Create a new user instance.
+    A simple ViewSet for listing or retrieving users.
     """
-    def get(self, request, *args, **kwargs):
+    def list(self, request):
         users_all = models.User.objects.all().order_by("-create_at")
         total = models.User.objects.count()
         page = CustomPagination()
@@ -131,74 +86,8 @@ class UserListView(APIView):
         ser = UserSerializer(users, many=True)
         return page.get_paginated_response(ser.data, msg="Users query succeed.", total=total)
 
-    def post(self, request, *args, **kwargs):
-        ser = UserSerializer(data=request.data)
-        if ser.is_valid():
-            ser.save()
-            res = { "data": ser.data, "msg": "User create succeed." }
-            return Response(res)
-        else:
-            res = { "data": ser.errors, "msg": "User create failed." }
-            return Response(res)
-
-class UserDetailView(APIView):
-    """
-    GET:
-    Return a single user instance.
-
-    PUT:
-    Update a user instance.
-
-    DELETE:
-    Delete a user instance.
-    """
-    def get(self, request, *args, **kwargs):
+    def retrieve(self, request, *args, **kwargs):
         username = kwargs.get("username")
         user = models.User.objects.get(username=username)
         ser = UserSerializer(user)
-        res = { "data": ser.data, "msg": "User info query succeed." }
-        return Response(res)
-
-    def put(self, request, *args, **kwargs):
-        username = kwargs.get("username")
-        user = models.User.objects.get(username=username)
-        ser = UserSerializer(user, data=request.data)
-        if ser.is_valid():
-            ser.save()
-            res = { "data": ser.data, "msg": "User info update succeed." }
-            return Response(res)
-        else:
-            res = { "data": ser.errors, "msg": "User info update failed." }
-            return Response(res)
-
-    def delete(self, request, *args, **kwargs):
-        username = kwargs.get("username")
-        user = models.User.objects.get(username=username)
-        user.delete()
-        res = { "data": None, "msg": "User delete succeed." }
-        return Response(res)
-
-class UserSettingsView(APIView):
-    """
-    GET:
-    Return current user instance.
-
-    PUT:
-    Update current user instance.
-    """
-    def get(self, request, *args, **kwargs):
-        user = request.user
-        ser = UserSerializer(user)
-        res = { "data": ser.data, "msg": "User settings query succeed." }
-        return Response(res)
-
-    def put(self, request, *args, **kwargs):
-        user = request.user
-        ser = UserSerializer(user, data=request.data)
-        if ser.is_valid():
-            ser.save()
-            res = { "data": ser.data, "msg": "User settings update succeed." }
-            return Response(res)
-        else:
-            res = { "data": ser.errors, "msg": "User settings update failed." }
-            return Response(res)
+        return Response({ "code": status.HTTP_200_OK, "data": ser.data, "msg": "User info query succeed." })

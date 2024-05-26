@@ -84,6 +84,8 @@ INSTALLED_APPS = [
     # "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
+    "rest_framework_simplejwt",
+    "api",
 ]
 
 MIDDLEWARE = [
@@ -126,7 +128,14 @@ TIME_ZONE = "Asia/Shanghai"
 # ...
 
 
-APPEND_SLASH = False
+AUTH_USER_MODEL = "api.User"
+
+
+LOGIN_REDIRECT_URL = "/api/"
+LOGOUT_REDIRECT_URL = "/api/"
+
+
+# APPEND_SLASH = False
 # SILENCED_SYSTEM_CHECKS = ['urls.W002']
 
 
