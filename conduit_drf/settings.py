@@ -141,7 +141,11 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 AUTH_USER_MODEL = "api.User"
 
 
-APPEND_SLASH = False
+LOGIN_REDIRECT_URL = "/api/"
+LOGOUT_REDIRECT_URL = "/api/"
+
+
+# APPEND_SLASH = False
 # SILENCED_SYSTEM_CHECKS = ['urls.W002']
 
 
