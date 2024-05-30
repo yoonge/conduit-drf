@@ -1,6 +1,7 @@
 from typing import Any, Dict
 from rest_framework.serializers import CharField, ModelSerializer, StringRelatedField, \
     ValidationError
+from rest_framework.validators import UniqueValidator
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from api.models import Tag, Topic, User
 from api.utils.hook import HookSerializer
@@ -38,39 +39,48 @@ class UserReadSerializer(HookSerializer, ModelSerializer):
         return obj.get_gender_display()
 
 class UserWriteSerializer(HookSerializer, ModelSerializer):
-    confirm_password = CharField(max_length=128, read_only=True)
+    confirm_password = CharField(max_length=128)
 
     class Meta:
         model = User
-        fields = [
-            "_id", "avatar", "bio", "birthday", "confirm_password", "create_at", "date_joined",
-            "email", "favorite", "gender", "is_active", "is_staff", "job", "last_login",
-            "nickname", "password", "phone", "update_at", "username"
-        ]
-        # fields = "__all__"
+        # fields = [
+        #     "_id", "avatar", "bio", "birthday", "confirm_password", "create_at", "date_joined",
+        #     "email", "favorite", "gender", "is_active", "is_staff", "job", "last_login",
+        #     "nickname", "password", "phone", "update_at", "username"
+        # ]
+        fields = "__all__"
         extra_kwargs = {
-            "create_at": { "format": "%Y-%m-%d %H:%M:%S", "read_only": True },
-            "date_joined": { "format": "%Y-%m-%d %H:%M:%S", "read_only": True },
+            # "create_at": { "format": "%Y-%m-%d %H:%M:%S", "read_only": True },
+            # "date_joined": { "format": "%Y-%m-%d %H:%M:%S", "read_only": True },
             "is_staff": { "read_only": True },
-            "last_login": { "format": "%Y-%m-%d %H:%M:%S", "read_only": True },
-            "password": { "write_only": True },
-            "update_at": { "format": "%Y-%m-%d %H:%M:%S", "read_only": True },
+            # "last_login": { "format": "%Y-%m-%d %H:%M:%S", "read_only": True },
+            # "password": { "write_only": True },
+            # "update_at": { "format": "%Y-%m-%d %H:%M:%S", "read_only": True },
         }
 
     def validate_email(self, value: str) -> str:
-        if User.objects.filter(email=value).exists():
-            raise ValidationError("Email already exists.")
+        if self.instance:
+            if self.instance.email != value:
+                raise ValidationError("E-mail can't be changed.")
+        else:
+            if User.objects.filter(email=value).exists():
+                raise ValidationError("E-mail already exists.")
         return value
 
     def validate_username(self, value: str) -> str:
-        if User.objects.filter(username=value).exists():
-            raise ValidationError("Username already exists.")
+        if self.instance:
+            if self.instance.username != value:
+                raise ValidationError("Username can't be changed.")
+        else:
+            if User.objects.filter(username=value).exists():
+                raise ValidationError("Username already exists.")
         return value
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, str]:
-        if "password" in attrs and "confirm_password" in attrs \
+        if "confirm_password" in attrs and "password" in attrs \
         and attrs["password"] != attrs["confirm_password"]:
             raise ValidationError("Passwords don't match.")
+
         return attrs
 
     def hk_gender(self, obj):
