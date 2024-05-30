@@ -26,7 +26,9 @@ class User(AbstractUser):
     # Cascade Delete
     # depart = models.ForeignKey(to="Department", to_field="id", on_delete=models.CASCADE)
     # Set NULL
-    # depart = models.ForeignKey(to="Department", to_field="id", null=True, blank=True, on_delete=models.SET_NULL)
+    # depart = models.ForeignKey(
+    #     to="Department", to_field="id", null=True, blank=True, on_delete=models.SET_NULL
+    # )
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["username"]

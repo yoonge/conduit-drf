@@ -97,7 +97,11 @@ class TopicViewSet(ViewSet):
             return Response({ "code": status.HTTP_404_NOT_FOUND, "msg": "Topic not found." })
 
         ser = TopicReadSerializer(topic)
-        return Response({ "code": status.HTTP_200_OK, "data": ser.data, "msg": "Topic query succeed." })
+        return Response({
+            "code": status.HTTP_200_OK,
+            "data": ser.data,
+            "msg": "Topic query succeed."
+        })
 
     def create(self, request):
         tags_str = request.data.pop("tags")
@@ -183,15 +187,27 @@ class UserViewSet(ViewSet):
             return Response({ "code": status.HTTP_404_NOT_FOUND, "msg": "User not found." })
 
         ser = UserReadSerializer(user)
-        return Response({ "code": status.HTTP_200_OK, "data": ser.data, "msg": "User info query succeed." })
+        return Response({
+            "code": status.HTTP_200_OK,
+            "data": ser.data,
+            "msg": "User info query succeed."
+        })
 
     def create(self, request):
         ser = UserWriteSerializer(data=request.data)
         if not ser.is_valid():
-            return Response({ "code": status.HTTP_400_BAD_REQUEST, "error": ser.errors, "msg": "User create failed." })
+            return Response({
+                "code": status.HTTP_400_BAD_REQUEST,
+                "error": ser.errors,
+                "msg": "User create failed."
+            })
 
-        ser.save()
-        return Response({ "code": status.HTTP_201_CREATED, "data": ser.data, "msg": "User create succeed." })
+        instance = ser.save()
+        return Response({
+            "code": status.HTTP_201_CREATED,
+            "data": UserReadSerializer(instance).data,
+            "msg": "User create succeed."
+        })
 
     def update(self, request, *args, **kwargs):
         try:
@@ -202,10 +218,18 @@ class UserViewSet(ViewSet):
 
         ser = UserWriteSerializer(user, data=request.data, partial=True)
         if not ser.is_valid():
-            return Response({ "code": status.HTTP_400_BAD_REQUEST, "error": ser.errors, "msg": "User update failed." })
+            return Response({
+                "code": status.HTTP_400_BAD_REQUEST,
+                "error": ser.errors,
+                "msg": "User update failed."
+            })
 
-        ser.save()
-        return Response({ "code": status.HTTP_200_OK, "data": ser.data, "msg": "User update succeed." })
+        instance = ser.save()
+        return Response({
+            "code": status.HTTP_200_OK,
+            "data": UserReadSerializer(instance).data,
+            "msg": "User update succeed."
+        })
 
     def destroy(self, request, *args, **kwargs):
         try:
