@@ -1,7 +1,7 @@
 from typing import Any, Dict
-from rest_framework import serializers
+from rest_framework.serializers import ModelSerializer, StringRelatedField
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from api import models
+from api.models import Tag, Topic, User
 from api.utils.hook import HookSerializer
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -21,9 +21,9 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         }
         return res
 
-class UserSerializer(HookSerializer, serializers.ModelSerializer):
+class UserSerializer(HookSerializer, ModelSerializer):
     class Meta:
-        model = models.User
+        model = User
         # fields = [
         #     "_id", "avatar", "bio", "birthday", "create_at", "email", "gender",
         #     "job", "nickname", "password", "phone", "update_at", "username"
@@ -38,21 +38,27 @@ class UserSerializer(HookSerializer, serializers.ModelSerializer):
     def hk_gender(self, obj):
         return obj.get_gender_display()
 
-class TagSerializer(serializers.ModelSerializer):
+class TagSerializer(ModelSerializer):
     class Meta:
-        model = models.Tag
+        model = Tag
         fields = "__all__"
         extra_kwargs = {
             "create_at": { "format": "%Y-%m-%d %H:%M:%S", "read_only": True },
         }
 
-class TopicSerializer(serializers.ModelSerializer):
+class TopicReadSerializer(ModelSerializer):
+    tags = StringRelatedField(many=True)
     user = UserSerializer()
-    tags = TagSerializer(many=True)
+
     class Meta:
-        model = models.Topic
+        model = Topic
         fields = "__all__"
         extra_kwargs = {
             "create_at": { "format": "%Y-%m-%d %H:%M:%S", "read_only": True },
             "update_at": { "format": "%Y-%m-%d %H:%M:%S", "read_only": True },
         }
+
+class TopicWriteSerializer(ModelSerializer):
+    class Meta:
+        model = Topic
+        fields = ["content", "tags", "title", "user"]

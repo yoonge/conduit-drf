@@ -1,7 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
-# Create your models here.
 class User(AbstractUser):
     """ User Table """
     _id = models.AutoField("id", primary_key=True)
@@ -37,13 +36,16 @@ class User(AbstractUser):
             models.Index(fields=["username", "-create_at"]),
         ]
 
+    def __str__(self) -> str:
+        return self.username
+
 
 class Topic(models.Model):
     """ Topic Table """
     _id = models.AutoField("id", primary_key=True)
     content = models.TextField("content")
     create_at = models.DateTimeField("create at", auto_now_add=True)
-    favorote = models.IntegerField("favorote", default=0)
+    favorite = models.IntegerField("favorite", default=0)
     tags = models.ManyToManyField(to="Tag", related_name="topic_tags", blank=True)
     title = models.TextField("title")
     update_at = models.DateTimeField("update at", null=True, blank=True, auto_now=True)
@@ -53,6 +55,9 @@ class Topic(models.Model):
         indexes = [
             models.Index(fields=["-create_at"]),
         ]
+
+    def __str__(self) -> str:
+        return self.title
 
 class Tag(models.Model):
     """ Tag Table """
@@ -66,6 +71,9 @@ class Tag(models.Model):
             models.Index(fields=["tag", "-create_at"]),
         ]
 
+    def __str__(self) -> str:
+        return self.tag
+
 class Comment(models.Model):
     """ Comment Table """
     _id = models.AutoField("id", primary_key=True)
@@ -78,3 +86,6 @@ class Comment(models.Model):
         indexes = [
             models.Index(fields=["-create_at"]),
         ]
+
+    def __str__(self) -> str:
+        return self.content
