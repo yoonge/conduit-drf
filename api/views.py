@@ -8,6 +8,7 @@ from api.models import Tag, Topic, User
 from api.serializers import TagSerializer, TopicReadSerializer, TopicWriteSerializer, \
     UserReadSerializer, UserWriteSerializer
 from api.utils.pagination import CustomPagination
+from api.utils.permisson import IsAdminOrOwner, IsAdminOrSelf
 
 @api_view(["GET"])
 @permission_classes((IsAuthenticatedOrReadOnly, ))
@@ -15,11 +16,17 @@ def api_root(request, format=None):
     """
     API root.
     """
-    return Response({
-        "tags": reverse("tag-list", request=request, format=format),
-        "topics": reverse("topic-list", request=request, format=format),
-        "users": reverse("user-list", request=request, format=format),
-    })
+    return Response([
+        { "topics": reverse("topic-list", request=request, format=format) },
+        { "topic-detail": "http://localhost:8000/api/topic/1/" },
+        { "my-topics": reverse("my-own-topics", request=request, format=format) },
+        { "my-favorites": reverse("my-favorite-topics", request=request, format=format) },
+        { "users": reverse("user-list", request=request, format=format) },
+        { "user-detail": "http://localhost:8000/api/user/admin/" },
+        { "user-topics": "http://localhost:8000/api/profile/admin/" },
+        { "user-favorites": "http://localhost:8000/api/profile/admin/favorites/" },
+        { "tags": reverse("tag-list", request=request, format=format) },
+    ])
 
 def fetch_topics(request, username = None, favor = False):
     if username is not None:
@@ -27,11 +34,10 @@ def fetch_topics(request, username = None, favor = False):
     else:
         user = request.user
 
-    favorites = User.objects.get(_id=user._id).favorite.all()
-    favorite_ids = [f._id for f in favorites]
-    print("User's favorite topics id: {}\n".format(favorite_ids))
-
     if favor:
+        favorites = User.objects.get(_id=user._id).favorites.all()
+        favorite_ids = [f._id for f in favorites]
+        print("User's favorite topics id: {}\n".format(favorite_ids))
         topics_all = Topic.objects.filter(_id__in=favorite_ids).order_by("-create_at")
         total = len(favorite_ids)
     else:
@@ -48,12 +54,6 @@ class TagViewSet(ViewSet):
     """
     GET list:
     Return a list of all the tags.
-
-    GET retrieve:
-    Return a tag instance.
-
-    POST create:
-    Create a new tag instance.
     """
     permission_classes = (IsAuthenticatedOrReadOnly, )
 
@@ -79,8 +79,31 @@ class TopicViewSet(ViewSet):
 
     DELETE destroy:
     Destroy a topic instance.
+
+    GET /api/my-topics/ :
+    Return a list of all the topics created by the current user.
+
+    GET /api/my-favorites/ :
+    Return a list of all the topics favorited by the current user.
+
+    GET /api/profile/<username>/ :
+    Return a list of all the topics created by the specified user.
+
+    GET /api/profile/<username>/favorites/ :
+    Return a list of all the topics favorited by the specified user.
     """
-    permission_classes = (IsAuthenticatedOrReadOnly, )
+    permission_classes = [IsAuthenticatedOrReadOnly, ]
+
+    def get_permissions(self):
+        self.permission_classes = [IsAuthenticatedOrReadOnly, ]
+
+        if self.action == "destroy" or self.action == "update":
+            self.permission_classes = [IsAuthenticated, IsAdminOrOwner, ]
+        elif self.action == "my_topics" or self.action == "my_favorites" \
+        or self.action == "user_topics" or self.action == "user_favorites":
+            self.permission_classes = [IsAuthenticated, ]
+
+        return super().get_permissions()
 
     def list(self, request):
         topics_all = Topic.objects.all().order_by("-create_at")
@@ -124,6 +147,8 @@ class TopicViewSet(ViewSet):
         except Topic.DoesNotExist:
             return Response({ "code": status.HTTP_404_NOT_FOUND, "msg": "Topic not found." })
 
+        self.check_object_permissions(request, topic)
+
         tags_str = request.data.pop("tags")
         tags = []
         for tag_str in tags_str:
@@ -144,8 +169,27 @@ class TopicViewSet(ViewSet):
         except Topic.DoesNotExist:
             return Response({ "code": status.HTTP_404_NOT_FOUND, "msg": "Topic not found." })
 
+        self.check_object_permissions(request, topic)
         topic.delete()
         return Response({ "code": status.HTTP_204_NO_CONTENT, "msg": "Topic delete succeed." })
+
+    def my_topics(self, request):
+        page, topics, total, user = fetch_topics(request)
+        return page.get_paginated_response(topics, msg="My own topics query succeed.", total=total, user=user)
+
+    def my_favorites(self, request):
+        page, topics, total, user = fetch_topics(request, favor=True)
+        return page.get_paginated_response(topics, msg="My favorite topics query succeed.", total=total, user=user)
+
+    def user_topics(self, request, username):
+        page, topics, total, user = fetch_topics(request, username)
+        msg = "User {}'s own topics query succeed.".format(username)
+        return page.get_paginated_response(topics, msg=msg, total=total, user=user)
+
+    def user_favorites(self, request, username):
+        page, topics, total, user = fetch_topics(request, username=username, favor=True)
+        msg = "User {}'s favorite topics query succeed.".format(username)
+        return page.get_paginated_response(topics, msg=msg, total=total, user=user)
 
 class UserViewSet(ViewSet):
     """
@@ -165,11 +209,14 @@ class UserViewSet(ViewSet):
     Destroy a user instance.
     """
     def get_permissions(self):
+        self.permission_classes = [IsAuthenticated, ]
+
         if self.action == "destroy":
-            permission_classes = [IsAdminUser, ]
-        else:
-            permission_classes = [IsAuthenticated, ]
-        return [permission() for permission in permission_classes]
+            self.permission_classes.append(IsAdminUser)
+        elif self.action == "update":
+            self.permission_classes.append(IsAdminOrSelf)
+
+        return super().get_permissions()
 
     def list(self, request):
         users_all = User.objects.all().order_by("-create_at")
@@ -179,9 +226,8 @@ class UserViewSet(ViewSet):
         ser = UserReadSerializer(users, many=True)
         return page.get_paginated_response(ser.data, msg="Users query succeed.", total=total)
 
-    def retrieve(self, request, *args, **kwargs):
+    def retrieve(self, request, username):
         try:
-            username = kwargs.get("username")
             user = User.objects.get(username=username)
         except User.DoesNotExist:
             return Response({ "code": status.HTTP_404_NOT_FOUND, "msg": "User not found." })
@@ -209,13 +255,13 @@ class UserViewSet(ViewSet):
             "msg": "User create succeed."
         })
 
-    def update(self, request, *args, **kwargs):
+    def update(self, request, username):
         try:
-            username = kwargs.get("username")
             user = User.objects.get(username=username)
         except User.DoesNotExist:
             return Response({ "code": status.HTTP_404_NOT_FOUND, "msg": "User not found." })
 
+        self.check_object_permissions(request, user)
         ser = UserWriteSerializer(user, data=request.data, partial=True)
         if not ser.is_valid():
             return Response({
@@ -231,9 +277,8 @@ class UserViewSet(ViewSet):
             "msg": "User update succeed."
         })
 
-    def destroy(self, request, *args, **kwargs):
+    def destroy(self, request, username):
         try:
-            username = kwargs.get("username")
             user = User.objects.get(username=username)
         except User.DoesNotExist:
             return Response({ "code": status.HTTP_404_NOT_FOUND, "msg": "User not found." })

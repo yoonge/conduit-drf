@@ -3,23 +3,26 @@ from django.contrib.auth.models import AbstractUser
 
 class User(AbstractUser):
     """ User Table """
+    date_joined = None
+    first_name = None
+    last_name = None
     _id = models.AutoField("id", primary_key=True)
-    avatar = models.CharField("avatar", max_length=256, default='/images/typescript.svg')
-    bio = models.TextField("bio", default='')
-    birthday = models.CharField("birthday", max_length=64, default='')
+    avatar = models.CharField("avatar", max_length=256, default="/images/typescript.svg")
+    bio = models.TextField("bio", default="")
+    birthday = models.CharField("birthday", max_length=64, default="")
     create_at = models.DateTimeField("create at", auto_now_add=True)
     email = models.EmailField("e-mail", max_length=128, unique=True)
-    favorite = models.ManyToManyField(to="Topic", related_name="user_favorites", blank=True)
+    favorites = models.ManyToManyField(to="Topic", related_name="user_favorites", blank=True)
     gender_choices = (
         (-1, "Secret"),
         (0, "Female"),
         (1, "Male"),
     )
     gender = models.SmallIntegerField("gender", choices=gender_choices, default=-1)
-    job = models.CharField("job", max_length=256, default='')
-    nickname = models.CharField("nickname", max_length=64, default='')
+    job = models.CharField("job", max_length=256, default="")
+    nickname = models.CharField("nickname", max_length=64, default="")
     password = models.CharField("password", max_length=128)
-    phone = models.CharField("phone", max_length=11, default='')
+    phone = models.CharField("phone", max_length=11, default="")
     update_at = models.DateTimeField("update at", null=True, blank=True, auto_now=True)
     username = models.CharField("username", max_length=32, unique=True)
 
@@ -66,7 +69,6 @@ class Tag(models.Model):
     _id = models.AutoField("id", primary_key=True)
     create_at = models.DateTimeField("create at", auto_now_add=True)
     tag = models.CharField("tag", max_length=128)
-    # topics = models.ManyToManyField(to="Topic", blank=True)
 
     class Meta:
         indexes = [
@@ -81,7 +83,7 @@ class Comment(models.Model):
     _id = models.AutoField("id", primary_key=True)
     content = models.TextField("content")
     create_at = models.DateTimeField("create at", auto_now_add=True)
-    topic = models.ForeignKey(to="Topic", to_field="_id", on_delete=models.CASCADE)
+    topic = models.ForeignKey(to="Topic", to_field="_id", related_name="comments", on_delete=models.CASCADE)
     user = models.ForeignKey(to="User", to_field="_id", on_delete=models.CASCADE)
 
     class Meta:

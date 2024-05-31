@@ -139,6 +139,9 @@ LOGOUT_REDIRECT_URL = "/api/"
 # SILENCED_SYSTEM_CHECKS = ['urls.W002']
 
 
+NON_FIELD_ERRORS_KEY = "custom_errors"
+
+
 # REST framework
 
 REST_FRAMEWORK = {

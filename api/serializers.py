@@ -1,7 +1,6 @@
 from typing import Any, Dict
 from rest_framework.serializers import CharField, ModelSerializer, StringRelatedField, \
     ValidationError
-from rest_framework.validators import UniqueValidator
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from api.models import Tag, Topic, User
 from api.utils.hook import HookSerializer
@@ -24,38 +23,33 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         return res
 
 class UserReadSerializer(HookSerializer, ModelSerializer):
+    favorites = StringRelatedField(many=True)
+
     class Meta:
         model = User
-        fields = "__all__"
+        # fields = "__all__"
+        exclude = [
+            "groups", "is_staff", "is_superuser", "password", "user_permissions",
+        ]
         extra_kwargs = {
             "create_at": { "format": "%Y-%m-%d %H:%M:%S", "read_only": True },
-            "date_joined": { "format": "%Y-%m-%d %H:%M:%S", "read_only": True },
+            # "date_joined": { "format": "%Y-%m-%d %H:%M:%S", "read_only": True },
             "last_login": { "format": "%Y-%m-%d %H:%M:%S", "read_only": True },
-            "password": { "write_only": True },
+            # "password": { "write_only": True },
             "update_at": { "format": "%Y-%m-%d %H:%M:%S", "read_only": True },
         }
 
     def hk_gender(self, obj):
         return obj.get_gender_display()
 
-class UserWriteSerializer(HookSerializer, ModelSerializer):
+class UserWriteSerializer(ModelSerializer):
     confirm_password = CharField(max_length=128)
 
     class Meta:
         model = User
-        # fields = [
-        #     "_id", "avatar", "bio", "birthday", "confirm_password", "create_at", "date_joined",
-        #     "email", "favorite", "gender", "is_active", "is_staff", "job", "last_login",
-        #     "nickname", "password", "phone", "update_at", "username"
-        # ]
         fields = "__all__"
         extra_kwargs = {
-            # "create_at": { "format": "%Y-%m-%d %H:%M:%S", "read_only": True },
-            # "date_joined": { "format": "%Y-%m-%d %H:%M:%S", "read_only": True },
             "is_staff": { "read_only": True },
-            # "last_login": { "format": "%Y-%m-%d %H:%M:%S", "read_only": True },
-            # "password": { "write_only": True },
-            # "update_at": { "format": "%Y-%m-%d %H:%M:%S", "read_only": True },
         }
 
     def validate_email(self, value: str) -> str:
@@ -76,15 +70,10 @@ class UserWriteSerializer(HookSerializer, ModelSerializer):
                 raise ValidationError("Username already exists.")
         return value
 
-    def validate(self, attrs: Dict[str, Any]) -> Dict[str, str]:
-        if "confirm_password" in attrs and "password" in attrs \
-        and attrs["password"] != attrs["confirm_password"]:
+    def validate_confirm_password(self, value: str) -> str:
+        if value != self.initial_data["password"]:
             raise ValidationError("Passwords don't match.")
-
-        return attrs
-
-    def hk_gender(self, obj):
-        return obj.get_gender_display()
+        return value
 
     def create(self, validated_data):
         validated_data.pop("confirm_password")
@@ -102,6 +91,7 @@ class TagSerializer(ModelSerializer):
         }
 
 class TopicReadSerializer(ModelSerializer):
+    comments = TagSerializer(many=True, read_only=True)
     tags = StringRelatedField(many=True)
     user = UserReadSerializer()
 
