@@ -6,25 +6,33 @@ urlpatterns = [
     path("tags/", views.TagViewSet.as_view({ "get": "list" }), name="tag-list"),
     path("topics/", views.TopicViewSet.as_view({
         "get": "list",
-        "post": "create"
+        "post": "create",
     }), name="topic-list"),
     re_path(r"^topic/(?P<pk>\d+)/$", views.TopicViewSet.as_view({
         "delete": "destroy",
         "get": "retrieve",
-        "put": "update"
+        "put": "update",
     }), name="topic-detail"),
     path("users/", views.UserViewSet.as_view({
         "get": "list",
-        "post": "create"
+        "post": "create",
     }), name="user-list"),
     path("user/<str:username>/", views.UserViewSet.as_view({
         "get": "retrieve",
         "put": "update",
-        "delete": "destroy"
+        "delete": "destroy",
     }), name="user-detail"),
-    # path("my-topics/", views.UserTopicListView.as_view()),
-    # path("my-favorites/", views.FavoriteTopicListView.as_view()),
-    # path("profile/<str:username>/", views.UserTopicListView.as_view()),
-    # path("profile/<str:username>/favorites/", views.FavoriteTopicListView.as_view()),
+    path("my-topics/", views.TopicViewSet.as_view({
+        "get": "my_topics",
+    }), name="my-own-topics"),
+    path("my-favorites/", views.TopicViewSet.as_view({
+        "get": "my_favorites",
+    }), name="my-favorite-topics"),
+    path("profile/<str:username>/", views.TopicViewSet.as_view({
+        "get": "user_topics",
+    }), name="user-own-topics"),
+    path("profile/<str:username>/favorites/", views.TopicViewSet.as_view({
+        "get": "user_favorites"
+    }), name="user-favorite-topics"),
     # path("settings/", views.UserSettingsView.as_view()),
 ]
