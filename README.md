@@ -1,53 +1,57 @@
-# ⌨️ Conduit Django REST Framework
+# ⌨️ Conduit DRF(Django REST Framework)
 
-Realworld: "The mother of all demo apps" — Exemplary back-end Medium.com clone (called [Conduit](https://github.com/yoonge/conduit-drf)), built with Django + DRF + MySQL + MySQLClient + PDM.
+![version](https://img.shields.io/badge/version-0.2.0-green) [![license](https://img.shields.io/badge/license-MIT-blue)](./LICENSE) ![django](https://img.shields.io/badge/django-4.2.11-113229) ![python](https://img.shields.io/badge/python-%3E%3D3.12.3-3776ab) ![mysql](https://img.shields.io/badge/mysql-8.3.0-02758f) ![pdm](https://img.shields.io/badge/pdm-2.15.1-ac75d7)
+
+
+## 💡 Introduction
+
+Realworld: "The mother of all demo apps" — Exemplary back-end Medium.com clone (called [Conduit](https://github.com/yoonge/conduit-drf)) in Python, built with Django + DRF + MySQL + MySQLClient + PDM.
 
 ![pdm-managed](https://img.shields.io/badge/pdm-managed-blueviolet)
 ![Django Badge](https://img.shields.io/badge/django-4?logo=django&labelColor=%23092E20&color=white)
 
-## 💡 Use this template
+
+## 🔰 Getting Started
 
 ```sh
-$ pdm init django
-```
+$ git clone https://github.com/yoonge/conduit-drf.git
 
-Or create a new project at the given path:
+$ cd conduit-django-ssr
 
-```sh
-$ pdm init -p django_project django
-```
+# Activate the virtual environment
+$ source ./.venv/bin/activate   # MacOS
+$ ./.venv/Scripts/activate  # Windows
 
-Visit https://localhost:8000 to see the welcome page.
+$ pdm install
 
-## 🔰 Development
-
-Create a new app:
-
-```sh
-$ pdm run manage.py startapp <app_name>
-```
-
-Migrate DB:
-
-```sh
-$ pdm migrate
-```
-
-Start development server:
-
-```sh
 $ pdm start
+
+# open anthoer terminal
+$ source ./.venv/bin/activate
+
+$ pdm makemigrations
+
+$ pdm migrate
+
+$ pdm createsuperuser
 ```
 
-Call other `manage.py` commands:
 
-```sh
-$ pdm run manage.py <command> [options]
-```
+<!-- ## 📁 Index -->
+
+
+<!-- ## ⚡ Features -->
+
+
+<!-- ## 📌 TODO -->
+
 
 ## 📄 License
 
-This project is licensed under the terms of the MIT license.
+Conduit DRF is [MIT-licensed](./LICENSE).
+
+
+<!-- ## 🔗 Links -->
 
 
 ----
@@ -68,10 +72,10 @@ $ ./.venv/Scripts/activate  # Windows
 
 $ py manage.py startapp api
 
-$ pdm add djangorestframework
+$ pdm add djangorestframework, djangorestframework-simplejwt, mysqlclient
 ```
 
-### `settings.py`
+## 🛠️ `settings.py`
 
 ```py
 # Application definition

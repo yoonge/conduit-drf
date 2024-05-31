@@ -2,7 +2,7 @@ from typing import Any, Dict
 from rest_framework.serializers import CharField, ModelSerializer, StringRelatedField, \
     ValidationError
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from api.models import Tag, Topic, User
+from api.models import Comment, Tag, Topic, User
 from api.utils.hook import HookSerializer
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -90,8 +90,24 @@ class TagSerializer(ModelSerializer):
             "create_at": { "format": "%Y-%m-%d %H:%M:%S", "read_only": True },
         }
 
+class CommentReadSerializer(ModelSerializer):
+    user = UserReadSerializer()
+
+    class Meta:
+        model = Comment
+        fields = "__all__"
+        extra_kwargs = {
+            "create_at": { "format": "%Y-%m-%d %H:%M:%S", "read_only": True },
+            "topic": { "write_only": True },
+        }
+
+class CommentWriteSerializer(ModelSerializer):
+    class Meta:
+        model = Comment
+        fields = "__all__"
+
 class TopicReadSerializer(ModelSerializer):
-    comments = TagSerializer(many=True, read_only=True)
+    comments = CommentReadSerializer(many=True, read_only=True)
     tags = StringRelatedField(many=True)
     user = UserReadSerializer()
 
