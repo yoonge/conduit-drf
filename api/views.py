@@ -4,9 +4,9 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework.viewsets import ViewSet
-from api.models import Tag, Topic, User
-from api.serializers import TagSerializer, TopicReadSerializer, TopicWriteSerializer, \
-    UserReadSerializer, UserWriteSerializer
+from api.models import Comment, Tag, Topic, User
+from api.serializers import CommentReadSerializer, CommentWriteSerializer, TagSerializer, \
+    TopicReadSerializer, TopicWriteSerializer, UserReadSerializer, UserWriteSerializer
 from api.utils.pagination import CustomPagination
 from api.utils.permisson import IsAdminOrOwner, IsAdminOrSelf
 
@@ -19,6 +19,7 @@ def api_root(request, format=None):
     return Response([
         { "topics": reverse("topic-list", request=request, format=format) },
         { "topic-detail": "http://localhost:8000/api/topic/1/" },
+        { "topic-comment": "http://localhost:8000/api/topic/1/comment/" },
         { "my-topics": reverse("my-own-topics", request=request, format=format) },
         { "my-favorites": reverse("my-favorite-topics", request=request, format=format) },
         { "users": reverse("user-list", request=request, format=format) },
@@ -50,6 +51,92 @@ def fetch_topics(request, username = None, favor = False):
     ser_user = UserReadSerializer(user)
     return (page, ser_topics.data, total, ser_user.data)
 
+class CommentViewSet(ViewSet):
+    """
+    GET list:
+    Return a list of all the comments for the specified topic.
+
+    GET retrieve:
+    Return the specified comment instance.
+
+    POST create:
+    Create a new comment instance for the specified topic.
+    """
+    permission_classes = [IsAuthenticated, ]
+
+    def get_permissions(self):
+        self.permission_classes = [IsAuthenticated, ]
+
+        if self.action == "destroy":
+            self.permission_classes = [IsAuthenticated, IsAdminOrOwner, ]
+
+        return super().get_permissions()
+
+    def list(self, request, pk=None):
+        try:
+            topic = Topic.objects.get(pk=pk)
+        except Topic.DoesNotExist:
+            return Response({ "code": status.HTTP_404_NOT_FOUND, "msg": "Topic not found." })
+
+        comments = topic.comments.all()
+        ser = CommentReadSerializer(comments, many=True)
+        return Response({
+            "code": status.HTTP_200_OK,
+            "data": ser.data,
+            "msg": "Topic comments query succeed."
+        })
+
+    def retrieve(self, request, _id=None, pk=None):
+        try:
+            comment = Comment.objects.get(pk=pk, topic=_id)
+        except Comment.DoesNotExist:
+            return Response({ "code": status.HTTP_404_NOT_FOUND, "msg": "Comment not found." })
+
+        ser = CommentReadSerializer(comment)
+        return Response({
+            "code": status.HTTP_200_OK,
+            "data": ser.data,
+            "msg": "Topic comment query succeed."
+        })
+
+    def create(self, request, pk=None):
+        try:
+            topic = Topic.objects.get(pk=pk)
+        except Topic.DoesNotExist:
+            return Response({ "code": status.HTTP_404_NOT_FOUND, "msg": "Topic not found." })
+
+        request.data["topic"] = pk
+        request.data["user"] = request.user._id
+        ser = CommentWriteSerializer(data=request.data)
+        if not ser.is_valid():
+            return Response({
+                "code": status.HTTP_400_BAD_REQUEST,
+                "error": ser.errors,
+                "msg": "Topic comment creation failed."
+            })
+
+        comment = ser.save()
+        topic.comments.add(comment)
+        return Response({
+            "code": status.HTTP_201_CREATED,
+            "data": TopicReadSerializer(topic).data,
+            "msg": "Topic comment creation succeed."
+        })
+
+    def destroy(self, request, _id=None, pk=None):
+        try:
+            topic = Topic.objects.get(pk=_id)
+            comment = Comment.objects.get(pk=pk, topic=_id)
+        except Topic.DoesNotExist:
+            return Response({ "code": status.HTTP_404_NOT_FOUND, "msg": "Topic not found." })
+        except Comment.DoesNotExist:
+            return Response({ "code": status.HTTP_404_NOT_FOUND, "msg": "Comment not found." })
+
+        self.check_object_permissions(request, comment)
+        topic.comments.remove(comment)
+        comment.delete()
+        return Response({ "code": status.HTTP_204_NO_CONTENT, "msg": "Topic comment deletion succeed." })
+
 class TagViewSet(ViewSet):
     """
     GET list:
@@ -69,7 +156,7 @@ class TopicViewSet(ViewSet):
     Return a list of all the topics.
 
     GET retrieve:
-    Return a topic instance.
+    Return the specified topic instance.
 
     POST create:
     Create a new topic instance and return it.
@@ -136,10 +223,18 @@ class TopicViewSet(ViewSet):
 
         ser = TopicWriteSerializer(data=request.data)
         if not ser.is_valid():
-            return Response({ "code": status.HTTP_400_BAD_REQUEST, "error": ser.errors, "msg": "Topic create failed." })
+            return Response({
+                "code": status.HTTP_400_BAD_REQUEST,
+                "error": ser.errors,
+                "msg": "Topic creation failed."
+            })
 
         ser.save()
-        return Response({ "code": status.HTTP_201_CREATED, "data": ser.data, "msg": "Topic create succeed." })
+        return Response({
+            "code": status.HTTP_201_CREATED,
+            "data": ser.data,
+            "msg": "Topic creation succeed."
+        })
 
     def update(self, request, pk=None):
         try:
@@ -197,7 +292,7 @@ class UserViewSet(ViewSet):
     Return a list of all the users.
 
     GET retrieve:
-    Return a user instance.
+    Return the specified user instance.
 
     POST create:
     Create a new user instance and return it.
