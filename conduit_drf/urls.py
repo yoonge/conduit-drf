@@ -16,7 +16,7 @@ Including another URLconf
 """
 
 # from django.contrib import admin
-from django.shortcuts import redirect
+# from django.shortcuts import redirect
 from django.urls import include, path
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 

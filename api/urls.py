@@ -4,93 +4,57 @@ from api import views
 urlpatterns = [
     path("", views.api_root),
     path("tags/", views.TagViewSet.as_view({"get": "list"}), name="tag-list"),
+    path("tag/<str:tag>/", views.TagViewSet.as_view({"get": "retrieve"}), name="tag-detail"),
     path(
         "topics/",
-        views.TopicViewSet.as_view(
-            {
-                "get": "list",
-                "post": "create",
-            }
-        ),
+        views.TopicViewSet.as_view({"get": "list", "post": "create"}),
         name="topic-list",
     ),
     re_path(
         r"^topic/(?P<pk>\d+)/$",
-        views.TopicViewSet.as_view(
-            {
-                "delete": "destroy",
-                "get": "retrieve",
-                "put": "update",
-            }
-        ),
+        views.TopicViewSet.as_view({"delete": "destroy", "get": "retrieve", "put": "update"}),
         name="topic-detail",
     ),
     re_path(
+        r"^topic/(?P<pk>\d+)/favor/$",
+        views.TopicViewSet.as_view({"post": "favor"}),
+        name="topic-favor",
+    ),
+    re_path(
         r"^topic/(?P<pk>\d+)/comment/$",
-        views.CommentViewSet.as_view(
-            {
-                "get": "list",
-                "post": "create",
-            }
-        ),
+        views.CommentViewSet.as_view({"get": "list", "post": "create"}),
         name="topic-comment",
     ),
     re_path(
         r"^topic/(?P<_id>\d+)/comment/(?P<pk>\d+)/$",
-        views.CommentViewSet.as_view(
-            {
-                "delete": "destroy",
-                "get": "retrieve",
-            }
-        ),
+        views.CommentViewSet.as_view({"delete": "destroy", "get": "retrieve"}),
         name="topic-comment",
     ),
     path(
         "users/",
-        views.UserViewSet.as_view(
-            {
-                "get": "list",
-                "post": "create",
-            }
-        ),
+        views.UserViewSet.as_view({"get": "list", "post": "create"}),
         name="user-list",
     ),
     path(
         "user/<str:username>/",
         views.UserViewSet.as_view(
-            {
-                "delete": "destroy",
-                "get": "retrieve",
-                "put": "update",
-            }
+            {"delete": "destroy", "get": "retrieve", "patch": "partial_update"}
         ),
         name="user-detail",
     ),
     path(
         "my-topics/",
-        views.TopicViewSet.as_view(
-            {
-                "get": "my_topics",
-            }
-        ),
+        views.TopicViewSet.as_view({"get": "my_topics"}),
         name="my-own-topics",
     ),
     path(
         "my-favorites/",
-        views.TopicViewSet.as_view(
-            {
-                "get": "my_favorites",
-            }
-        ),
+        views.TopicViewSet.as_view({"get": "my_favorites"}),
         name="my-favorite-topics",
     ),
     path(
         "profile/<str:username>/",
-        views.TopicViewSet.as_view(
-            {
-                "get": "user_topics",
-            }
-        ),
+        views.TopicViewSet.as_view({"get": "user_topics"}),
         name="user-own-topics",
     ),
     path(

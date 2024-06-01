@@ -32,6 +32,7 @@ def api_root(request, format=None):
         [
             {"topics": reverse("topic-list", request=request, format=format)},
             {"topic-detail": "http://localhost:8000/api/topic/1/"},
+            {"topic-favor": "http://localhost:8000/api/topic/1/favor/"},
             {"topic-comment": "http://localhost:8000/api/topic/1/comment/"},
             {"my-topics": reverse("my-own-topics", request=request, format=format)},
             {"my-favorites": reverse("my-favorite-topics", request=request, format=format)},
@@ -40,6 +41,7 @@ def api_root(request, format=None):
             {"user-topics": "http://localhost:8000/api/profile/admin/"},
             {"user-favorites": "http://localhost:8000/api/profile/admin/favorites/"},
             {"tags": reverse("tag-list", request=request, format=format)},
+            {"tag-detail": "http://localhost:8000/api/tag/conduit/"},
         ]
     )
 
@@ -76,7 +78,10 @@ class CommentViewSet(ViewSet):
     Return the specified comment instance.
 
     POST create:
-    Create a new comment instance for the specified topic.
+    Create a new comment instance for the specified topic, example:
+    {
+        "content": "This is a comment.",
+    }
 
     DELETE destroy:
     Delete the specified comment instance.
@@ -175,6 +180,9 @@ class TagViewSet(ViewSet):
     """
     GET list:
     Return a list of all the tags.
+
+    GET retrieve:
+    Return the specified tag instance.
     """
 
     permission_classes = (IsAuthenticatedOrReadOnly,)
@@ -189,6 +197,21 @@ class TagViewSet(ViewSet):
                 "data": ser.data,
                 "msg": "Tags query succeed.",
                 "total": total,
+            }
+        )
+
+    def retrieve(self, request, tag):
+        try:
+            tag = Tag.objects.get(tag=tag)
+        except Tag.DoesNotExist:
+            return Response({"code": status.HTTP_404_NOT_FOUND, "msg": "Tag not found."})
+
+        ser = TagSerializer(tag)
+        return Response(
+            {
+                "code": status.HTTP_200_OK,
+                "data": ser.data,
+                "msg": "Tag query succeed.",
             }
         )
 
@@ -221,6 +244,17 @@ class TopicViewSet(ViewSet):
 
     GET /api/profile/<username>/favorites/ :
     Return a list of all the topics favorited by the specified user.
+
+    POST /api/topic/<topic_id>/favor/ :
+    Favor or unfavor the specified topic.
+
+    Create / Update request JSON example:
+    {
+        "content": "See how the exact same Medium.com clone (called Conduit) is built using different frontends and backends. Yes, you can mix and match them, because they all adhere to the same API spec",
+        "tags": ["React", "API", "Conduit"],
+        "title": "Welcome to RealWorld project",
+        "user": 1,
+    }
     """
 
     permission_classes = (IsAuthenticatedOrReadOnly,)
@@ -238,6 +272,7 @@ class TopicViewSet(ViewSet):
             or self.action == "my_favorites"
             or self.action == "user_topics"
             or self.action == "user_favorites"
+            or self.action == "favor"
         ):
             self.permission_classes = (IsAuthenticated,)
 
@@ -359,6 +394,27 @@ class TopicViewSet(ViewSet):
         msg = "User {}'s favorite topics query succeed.".format(username)
         return page.get_paginated_response(topics, msg=msg, total=total, user=user)
 
+    def favor(self, request, pk=None):
+        try:
+            topic = Topic.objects.get(pk=pk)
+        except Topic.DoesNotExist:
+            return Response({"code": status.HTTP_404_NOT_FOUND, "msg": "Topic not found."})
+
+        user = request.user
+        if user.favorites.filter(pk=pk).exists():
+            user.favorites.remove(topic)
+            topic.favorite -= 1
+            topic.save()
+            msg = "Topic unfavor succeed."
+        else:
+            user.favorites.add(topic)
+            topic.favorite += 1
+            topic.save()
+            msg = "Topic favor succeed."
+
+        ser = TopicReadSerializer(topic)
+        return Response({"code": status.HTTP_200_OK, "data": ser.data, "msg": msg})
+
 
 class UserViewSet(ViewSet):
     """
@@ -369,10 +425,20 @@ class UserViewSet(ViewSet):
     Return the specified user instance.
 
     POST create:
-    Create a new user instance and return it.
+    Create a new user instance and return it, exmaple:
+    {
+        "email": "test@qq.com",
+        "username": "test",
+        "password": "123456"
+        "confirm_password": "123456",
+    }
 
-    PUT update:
-    Update a user instance and return it.
+    PATCH partial_update:
+    Partial update a user instance and return it, example:
+    {
+        "gender": 1,
+        "nickname": "Test",
+    }
 
     DELETE destroy:
     Destroy a user instance.
@@ -431,7 +497,7 @@ class UserViewSet(ViewSet):
             }
         )
 
-    def update(self, request, username):
+    def partial_update(self, request, username):
         try:
             user = User.objects.get(username=username)
         except User.DoesNotExist:
