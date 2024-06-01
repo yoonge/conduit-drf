@@ -1,9 +1,14 @@
 from typing import Any, Dict
-from rest_framework.serializers import CharField, ModelSerializer, StringRelatedField, \
-    ValidationError
+from rest_framework.serializers import (
+    CharField,
+    ModelSerializer,
+    StringRelatedField,
+    ValidationError,
+)
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from api.models import Comment, Tag, Topic, User
 from api.utils.hook import HookSerializer
+
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
@@ -18,9 +23,10 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
             "access": default_data["access"],
             "msg": "Login succeed.",
             "refresh": default_data["refresh"],
-            "user": UserReadSerializer(self.user).data
+            "user": UserReadSerializer(self.user).data,
         }
         return res
+
 
 class UserReadSerializer(HookSerializer, ModelSerializer):
     favorites = StringRelatedField(many=True)
@@ -29,18 +35,21 @@ class UserReadSerializer(HookSerializer, ModelSerializer):
         model = User
         # fields = "__all__"
         exclude = [
-            "groups", "is_staff", "is_superuser", "password", "user_permissions",
+            "groups",
+            "is_staff",
+            "is_superuser",
+            "password",
+            "user_permissions",
         ]
         extra_kwargs = {
-            "create_at": { "format": "%Y-%m-%d %H:%M:%S", "read_only": True },
-            # "date_joined": { "format": "%Y-%m-%d %H:%M:%S", "read_only": True },
-            "last_login": { "format": "%Y-%m-%d %H:%M:%S", "read_only": True },
-            # "password": { "write_only": True },
-            "update_at": { "format": "%Y-%m-%d %H:%M:%S", "read_only": True },
+            "create_at": {"format": "%Y-%m-%d %H:%M:%S", "read_only": True},
+            "last_login": {"format": "%Y-%m-%d %H:%M:%S", "read_only": True},
+            "update_at": {"format": "%Y-%m-%d %H:%M:%S", "read_only": True},
         }
 
     def hk_gender(self, obj):
         return obj.get_gender_display()
+
 
 class UserWriteSerializer(ModelSerializer):
     confirm_password = CharField(max_length=128)
@@ -49,7 +58,7 @@ class UserWriteSerializer(ModelSerializer):
         model = User
         fields = "__all__"
         extra_kwargs = {
-            "is_staff": { "read_only": True },
+            "is_staff": {"read_only": True},
         }
 
     def validate_email(self, value: str) -> str:
@@ -82,13 +91,15 @@ class UserWriteSerializer(ModelSerializer):
         user.save()
         return user
 
+
 class TagSerializer(ModelSerializer):
     class Meta:
         model = Tag
         fields = "__all__"
         extra_kwargs = {
-            "create_at": { "format": "%Y-%m-%d %H:%M:%S", "read_only": True },
+            "create_at": {"format": "%Y-%m-%d %H:%M:%S", "read_only": True},
         }
+
 
 class CommentReadSerializer(ModelSerializer):
     user = UserReadSerializer()
@@ -97,14 +108,16 @@ class CommentReadSerializer(ModelSerializer):
         model = Comment
         fields = "__all__"
         extra_kwargs = {
-            "create_at": { "format": "%Y-%m-%d %H:%M:%S", "read_only": True },
-            "topic": { "write_only": True },
+            "create_at": {"format": "%Y-%m-%d %H:%M:%S", "read_only": True},
+            "topic": {"write_only": True},
         }
+
 
 class CommentWriteSerializer(ModelSerializer):
     class Meta:
         model = Comment
         fields = "__all__"
+
 
 class TopicReadSerializer(ModelSerializer):
     comments = CommentReadSerializer(many=True, read_only=True)
@@ -115,9 +128,10 @@ class TopicReadSerializer(ModelSerializer):
         model = Topic
         fields = "__all__"
         extra_kwargs = {
-            "create_at": { "format": "%Y-%m-%d %H:%M:%S", "read_only": True },
-            "update_at": { "format": "%Y-%m-%d %H:%M:%S", "read_only": True },
+            "create_at": {"format": "%Y-%m-%d %H:%M:%S", "read_only": True},
+            "update_at": {"format": "%Y-%m-%d %H:%M:%S", "read_only": True},
         }
+
 
 class TopicWriteSerializer(ModelSerializer):
     class Meta:
