@@ -1,35 +1,50 @@
 from rest_framework import status
-from rest_framework.permissions import IsAdminUser, IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import (
+    IsAdminUser,
+    IsAuthenticated,
+    IsAuthenticatedOrReadOnly,
+)
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework.viewsets import ViewSet
 from api.models import Comment, Tag, Topic, User
-from api.serializers import CommentReadSerializer, CommentWriteSerializer, TagSerializer, \
-    TopicReadSerializer, TopicWriteSerializer, UserReadSerializer, UserWriteSerializer
+from api.serializers import (
+    CommentReadSerializer,
+    CommentWriteSerializer,
+    TagSerializer,
+    TopicReadSerializer,
+    TopicWriteSerializer,
+    UserReadSerializer,
+    UserWriteSerializer,
+)
 from api.utils.pagination import CustomPagination
 from api.utils.permisson import IsAdminOrOwner, IsAdminOrSelf
 
+
 @api_view(["GET"])
-@permission_classes((IsAuthenticatedOrReadOnly, ))
+@permission_classes((IsAuthenticatedOrReadOnly,))
 def api_root(request, format=None):
     """
     API root.
     """
-    return Response([
-        { "topics": reverse("topic-list", request=request, format=format) },
-        { "topic-detail": "http://localhost:8000/api/topic/1/" },
-        { "topic-comment": "http://localhost:8000/api/topic/1/comment/" },
-        { "my-topics": reverse("my-own-topics", request=request, format=format) },
-        { "my-favorites": reverse("my-favorite-topics", request=request, format=format) },
-        { "users": reverse("user-list", request=request, format=format) },
-        { "user-detail": "http://localhost:8000/api/user/admin/" },
-        { "user-topics": "http://localhost:8000/api/profile/admin/" },
-        { "user-favorites": "http://localhost:8000/api/profile/admin/favorites/" },
-        { "tags": reverse("tag-list", request=request, format=format) },
-    ])
+    return Response(
+        [
+            {"topics": reverse("topic-list", request=request, format=format)},
+            {"topic-detail": "http://localhost:8000/api/topic/1/"},
+            {"topic-comment": "http://localhost:8000/api/topic/1/comment/"},
+            {"my-topics": reverse("my-own-topics", request=request, format=format)},
+            {"my-favorites": reverse("my-favorite-topics", request=request, format=format)},
+            {"users": reverse("user-list", request=request, format=format)},
+            {"user-detail": "http://localhost:8000/api/user/admin/"},
+            {"user-topics": "http://localhost:8000/api/profile/admin/"},
+            {"user-favorites": "http://localhost:8000/api/profile/admin/favorites/"},
+            {"tags": reverse("tag-list", request=request, format=format)},
+        ]
+    )
 
-def fetch_topics(request, username = None, favor = False):
+
+def fetch_topics(request, username=None, favor=False):
     if username is not None:
         user = User.objects.get(username=username)
     else:
@@ -51,6 +66,7 @@ def fetch_topics(request, username = None, favor = False):
     ser_user = UserReadSerializer(user)
     return (page, ser_topics.data, total, ser_user.data)
 
+
 class CommentViewSet(ViewSet):
     """
     GET list:
@@ -61,14 +77,18 @@ class CommentViewSet(ViewSet):
 
     POST create:
     Create a new comment instance for the specified topic.
+
+    DELETE destroy:
+    Delete the specified comment instance.
     """
-    permission_classes = [IsAuthenticated, ]
+
+    permission_classes = (IsAuthenticated,)
 
     def get_permissions(self):
-        self.permission_classes = [IsAuthenticated, ]
+        self.permission_classes = (IsAuthenticated,)
 
         if self.action == "destroy":
-            self.permission_classes = [IsAuthenticated, IsAdminOrOwner, ]
+            self.permission_classes += (IsAdminOrOwner,)
 
         return super().get_permissions()
 
@@ -76,79 +96,102 @@ class CommentViewSet(ViewSet):
         try:
             topic = Topic.objects.get(pk=pk)
         except Topic.DoesNotExist:
-            return Response({ "code": status.HTTP_404_NOT_FOUND, "msg": "Topic not found." })
+            return Response({"code": status.HTTP_404_NOT_FOUND, "msg": "Topic not found."})
 
         comments = topic.comments.all()
         ser = CommentReadSerializer(comments, many=True)
-        return Response({
-            "code": status.HTTP_200_OK,
-            "data": ser.data,
-            "msg": "Topic comments query succeed."
-        })
+        return Response(
+            {
+                "code": status.HTTP_200_OK,
+                "data": ser.data,
+                "msg": "Topic comments query succeed.",
+            }
+        )
 
     def retrieve(self, request, _id=None, pk=None):
         try:
             comment = Comment.objects.get(pk=pk, topic=_id)
         except Comment.DoesNotExist:
-            return Response({ "code": status.HTTP_404_NOT_FOUND, "msg": "Comment not found." })
+            return Response({"code": status.HTTP_404_NOT_FOUND, "msg": "Comment not found."})
 
         ser = CommentReadSerializer(comment)
-        return Response({
-            "code": status.HTTP_200_OK,
-            "data": ser.data,
-            "msg": "Topic comment query succeed."
-        })
+        return Response(
+            {
+                "code": status.HTTP_200_OK,
+                "data": ser.data,
+                "msg": "Topic comment query succeed.",
+            }
+        )
 
     def create(self, request, pk=None):
         try:
             topic = Topic.objects.get(pk=pk)
         except Topic.DoesNotExist:
-            return Response({ "code": status.HTTP_404_NOT_FOUND, "msg": "Topic not found." })
+            return Response({"code": status.HTTP_404_NOT_FOUND, "msg": "Topic not found."})
 
         request.data["topic"] = pk
         request.data["user"] = request.user._id
         ser = CommentWriteSerializer(data=request.data)
         if not ser.is_valid():
-            return Response({
-                "code": status.HTTP_400_BAD_REQUEST,
-                "error": ser.errors,
-                "msg": "Topic comment creation failed."
-            })
+            return Response(
+                {
+                    "code": status.HTTP_400_BAD_REQUEST,
+                    "error": ser.errors,
+                    "msg": "Topic comment creation failed.",
+                }
+            )
 
         comment = ser.save()
         topic.comments.add(comment)
-        return Response({
-            "code": status.HTTP_201_CREATED,
-            "data": TopicReadSerializer(topic).data,
-            "msg": "Topic comment creation succeed."
-        })
+        return Response(
+            {
+                "code": status.HTTP_201_CREATED,
+                "data": TopicReadSerializer(topic).data,
+                "msg": "Topic comment creation succeed.",
+            }
+        )
 
     def destroy(self, request, _id=None, pk=None):
         try:
             topic = Topic.objects.get(pk=_id)
             comment = Comment.objects.get(pk=pk, topic=_id)
         except Topic.DoesNotExist:
-            return Response({ "code": status.HTTP_404_NOT_FOUND, "msg": "Topic not found." })
+            return Response({"code": status.HTTP_404_NOT_FOUND, "msg": "Topic not found."})
         except Comment.DoesNotExist:
-            return Response({ "code": status.HTTP_404_NOT_FOUND, "msg": "Comment not found." })
+            return Response({"code": status.HTTP_404_NOT_FOUND, "msg": "Comment not found."})
 
         self.check_object_permissions(request, comment)
         topic.comments.remove(comment)
         comment.delete()
-        return Response({ "code": status.HTTP_204_NO_CONTENT, "msg": "Topic comment deletion succeed." })
+        return Response(
+            {
+                "code": status.HTTP_204_NO_CONTENT,
+                "msg": "Topic comment deletion succeed.",
+            }
+        )
+
 
 class TagViewSet(ViewSet):
     """
     GET list:
     Return a list of all the tags.
     """
-    permission_classes = (IsAuthenticatedOrReadOnly, )
+
+    permission_classes = (IsAuthenticatedOrReadOnly,)
 
     def list(self, request):
         tags = Tag.objects.all().order_by("-create_at")
         total = Tag.objects.count()
         ser = TagSerializer(tags, many=True)
-        return Response({ "code": status.HTTP_200_OK, "data": ser.data, "msg": "Tags query succeed.", "total": total })
+        return Response(
+            {
+                "code": status.HTTP_200_OK,
+                "data": ser.data,
+                "msg": "Tags query succeed.",
+                "total": total,
+            }
+        )
+
 
 class TopicViewSet(ViewSet):
     """
@@ -179,16 +222,24 @@ class TopicViewSet(ViewSet):
     GET /api/profile/<username>/favorites/ :
     Return a list of all the topics favorited by the specified user.
     """
-    permission_classes = [IsAuthenticatedOrReadOnly, ]
+
+    permission_classes = (IsAuthenticatedOrReadOnly,)
 
     def get_permissions(self):
-        self.permission_classes = [IsAuthenticatedOrReadOnly, ]
+        self.permission_classes = (IsAuthenticatedOrReadOnly,)
 
         if self.action == "destroy" or self.action == "update":
-            self.permission_classes = [IsAuthenticated, IsAdminOrOwner, ]
-        elif self.action == "my_topics" or self.action == "my_favorites" \
-        or self.action == "user_topics" or self.action == "user_favorites":
-            self.permission_classes = [IsAuthenticated, ]
+            self.permission_classes = (
+                IsAuthenticated,
+                IsAdminOrOwner,
+            )
+        elif (
+            self.action == "my_topics"
+            or self.action == "my_favorites"
+            or self.action == "user_topics"
+            or self.action == "user_favorites"
+        ):
+            self.permission_classes = (IsAuthenticated,)
 
         return super().get_permissions()
 
@@ -204,14 +255,16 @@ class TopicViewSet(ViewSet):
         try:
             topic = Topic.objects.get(pk=pk)
         except Topic.DoesNotExist:
-            return Response({ "code": status.HTTP_404_NOT_FOUND, "msg": "Topic not found." })
+            return Response({"code": status.HTTP_404_NOT_FOUND, "msg": "Topic not found."})
 
         ser = TopicReadSerializer(topic)
-        return Response({
-            "code": status.HTTP_200_OK,
-            "data": ser.data,
-            "msg": "Topic query succeed."
-        })
+        return Response(
+            {
+                "code": status.HTTP_200_OK,
+                "data": ser.data,
+                "msg": "Topic query succeed.",
+            }
+        )
 
     def create(self, request):
         tags_str = request.data.pop("tags")
@@ -223,24 +276,28 @@ class TopicViewSet(ViewSet):
 
         ser = TopicWriteSerializer(data=request.data)
         if not ser.is_valid():
-            return Response({
-                "code": status.HTTP_400_BAD_REQUEST,
-                "error": ser.errors,
-                "msg": "Topic creation failed."
-            })
+            return Response(
+                {
+                    "code": status.HTTP_400_BAD_REQUEST,
+                    "error": ser.errors,
+                    "msg": "Topic creation failed.",
+                }
+            )
 
         ser.save()
-        return Response({
-            "code": status.HTTP_201_CREATED,
-            "data": ser.data,
-            "msg": "Topic creation succeed."
-        })
+        return Response(
+            {
+                "code": status.HTTP_201_CREATED,
+                "data": ser.data,
+                "msg": "Topic creation succeed.",
+            }
+        )
 
     def update(self, request, pk=None):
         try:
             topic = Topic.objects.get(pk=pk)
         except Topic.DoesNotExist:
-            return Response({ "code": status.HTTP_404_NOT_FOUND, "msg": "Topic not found." })
+            return Response({"code": status.HTTP_404_NOT_FOUND, "msg": "Topic not found."})
 
         self.check_object_permissions(request, topic)
 
@@ -253,28 +310,44 @@ class TopicViewSet(ViewSet):
 
         ser = TopicWriteSerializer(topic, data=request.data)
         if not ser.is_valid():
-            return Response({ "code": status.HTTP_400_BAD_REQUEST, "error": ser.errors, "msg": "Topic update failed." })
+            return Response(
+                {
+                    "code": status.HTTP_400_BAD_REQUEST,
+                    "error": ser.errors,
+                    "msg": "Topic update failed.",
+                }
+            )
 
         ser.save()
-        return Response({ "code": status.HTTP_200_OK, "data": ser.data, "msg": "Topic update succeed." })
+        return Response(
+            {
+                "code": status.HTTP_200_OK,
+                "data": ser.data,
+                "msg": "Topic update succeed.",
+            }
+        )
 
     def destroy(self, request, pk=None):
         try:
             topic = Topic.objects.get(pk=pk)
         except Topic.DoesNotExist:
-            return Response({ "code": status.HTTP_404_NOT_FOUND, "msg": "Topic not found." })
+            return Response({"code": status.HTTP_404_NOT_FOUND, "msg": "Topic not found."})
 
         self.check_object_permissions(request, topic)
         topic.delete()
-        return Response({ "code": status.HTTP_204_NO_CONTENT, "msg": "Topic delete succeed." })
+        return Response({"code": status.HTTP_204_NO_CONTENT, "msg": "Topic delete succeed."})
 
     def my_topics(self, request):
         page, topics, total, user = fetch_topics(request)
-        return page.get_paginated_response(topics, msg="My own topics query succeed.", total=total, user=user)
+        return page.get_paginated_response(
+            topics, msg="My own topics query succeed.", total=total, user=user
+        )
 
     def my_favorites(self, request):
         page, topics, total, user = fetch_topics(request, favor=True)
-        return page.get_paginated_response(topics, msg="My favorite topics query succeed.", total=total, user=user)
+        return page.get_paginated_response(
+            topics, msg="My favorite topics query succeed.", total=total, user=user
+        )
 
     def user_topics(self, request, username):
         page, topics, total, user = fetch_topics(request, username)
@@ -285,6 +358,7 @@ class TopicViewSet(ViewSet):
         page, topics, total, user = fetch_topics(request, username=username, favor=True)
         msg = "User {}'s favorite topics query succeed.".format(username)
         return page.get_paginated_response(topics, msg=msg, total=total, user=user)
+
 
 class UserViewSet(ViewSet):
     """
@@ -303,13 +377,14 @@ class UserViewSet(ViewSet):
     DELETE destroy:
     Destroy a user instance.
     """
+
     def get_permissions(self):
-        self.permission_classes = [IsAuthenticated, ]
+        self.permission_classes = (IsAuthenticated,)
 
         if self.action == "destroy":
-            self.permission_classes.append(IsAdminUser)
+            self.permission_classes += (IsAdminUser,)
         elif self.action == "update":
-            self.permission_classes.append(IsAdminOrSelf)
+            self.permission_classes += (IsAdminOrSelf,)
 
         return super().get_permissions()
 
@@ -325,58 +400,68 @@ class UserViewSet(ViewSet):
         try:
             user = User.objects.get(username=username)
         except User.DoesNotExist:
-            return Response({ "code": status.HTTP_404_NOT_FOUND, "msg": "User not found." })
+            return Response({"code": status.HTTP_404_NOT_FOUND, "msg": "User not found."})
 
         ser = UserReadSerializer(user)
-        return Response({
-            "code": status.HTTP_200_OK,
-            "data": ser.data,
-            "msg": "User info query succeed."
-        })
+        return Response(
+            {
+                "code": status.HTTP_200_OK,
+                "data": ser.data,
+                "msg": "User info query succeed.",
+            }
+        )
 
     def create(self, request):
         ser = UserWriteSerializer(data=request.data)
         if not ser.is_valid():
-            return Response({
-                "code": status.HTTP_400_BAD_REQUEST,
-                "error": ser.errors,
-                "msg": "User create failed."
-            })
+            return Response(
+                {
+                    "code": status.HTTP_400_BAD_REQUEST,
+                    "error": ser.errors,
+                    "msg": "User create failed.",
+                }
+            )
 
         instance = ser.save()
-        return Response({
-            "code": status.HTTP_201_CREATED,
-            "data": UserReadSerializer(instance).data,
-            "msg": "User create succeed."
-        })
+        return Response(
+            {
+                "code": status.HTTP_201_CREATED,
+                "data": UserReadSerializer(instance).data,
+                "msg": "User create succeed.",
+            }
+        )
 
     def update(self, request, username):
         try:
             user = User.objects.get(username=username)
         except User.DoesNotExist:
-            return Response({ "code": status.HTTP_404_NOT_FOUND, "msg": "User not found." })
+            return Response({"code": status.HTTP_404_NOT_FOUND, "msg": "User not found."})
 
         self.check_object_permissions(request, user)
         ser = UserWriteSerializer(user, data=request.data, partial=True)
         if not ser.is_valid():
-            return Response({
-                "code": status.HTTP_400_BAD_REQUEST,
-                "error": ser.errors,
-                "msg": "User update failed."
-            })
+            return Response(
+                {
+                    "code": status.HTTP_400_BAD_REQUEST,
+                    "error": ser.errors,
+                    "msg": "User update failed.",
+                }
+            )
 
         instance = ser.save()
-        return Response({
-            "code": status.HTTP_200_OK,
-            "data": UserReadSerializer(instance).data,
-            "msg": "User update succeed."
-        })
+        return Response(
+            {
+                "code": status.HTTP_200_OK,
+                "data": UserReadSerializer(instance).data,
+                "msg": "User update succeed.",
+            }
+        )
 
     def destroy(self, request, username):
         try:
             user = User.objects.get(username=username)
         except User.DoesNotExist:
-            return Response({ "code": status.HTTP_404_NOT_FOUND, "msg": "User not found." })
+            return Response({"code": status.HTTP_404_NOT_FOUND, "msg": "User not found."})
 
         user.delete()
-        return Response({ "code": status.HTTP_204_NO_CONTENT, "msg": "User delete succeed." })
+        return Response({"code": status.HTTP_204_NO_CONTENT, "msg": "User delete succeed."})

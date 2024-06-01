@@ -2,9 +2,7 @@
 name = "conduit-drf"
 version = "0.1.0"
 description = "Django project template managed by PDM"
-authors = [
-    {name = "Svelte", email = "dev.yoonge@gmail.com"},
-]
+authors = [{ name = "Svelte", email = "dev.yoonge@gmail.com" }]
 dependencies = [
     "django~=4.2",
     "djangorestframework>=3.15.1",
@@ -13,7 +11,7 @@ dependencies = [
 ]
 requires-python = "==3.12.*"
 readme = "README.md"
-license = {text = "MIT"}
+license = { text = "MIT" }
 
 [tool.pdm]
 distribution = false
@@ -24,4 +22,3 @@ migrate = "python manage.py migrate"
 startapp = "python manage.py startapp"
 start = "python manage.py runserver"
 post_init = { composite = ["pdm install", "migrate", "start"] }
-

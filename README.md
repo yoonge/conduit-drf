@@ -2,14 +2,12 @@
 
 ![version](https://img.shields.io/badge/version-0.2.0-green) [![license](https://img.shields.io/badge/license-MIT-blue)](./LICENSE) ![django](https://img.shields.io/badge/django-4.2.11-113229) ![python](https://img.shields.io/badge/python-%3E%3D3.12.3-3776ab) ![mysql](https://img.shields.io/badge/mysql-8.3.0-02758f) ![pdm](https://img.shields.io/badge/pdm-2.15.1-ac75d7)
 
-
 ## 💡 Introduction
 
 Realworld: "The mother of all demo apps" — Exemplary back-end Medium.com clone (called [Conduit](https://github.com/yoonge/conduit-drf)) in Python, built with Django + DRF + MySQL + MySQLClient + PDM.
 
 ![pdm-managed](https://img.shields.io/badge/pdm-managed-blueviolet)
 ![Django Badge](https://img.shields.io/badge/django-4?logo=django&labelColor=%23092E20&color=white)
-
 
 ## 🔰 Getting Started
 
@@ -36,26 +34,19 @@ $ pdm migrate
 $ pdm createsuperuser
 ```
 
-
 <!-- ## 📁 Index -->
-
 
 <!-- ## ⚡ Features -->
 
-
 <!-- ## 📌 TODO -->
-
 
 ## 📄 License
 
 Conduit DRF is [MIT-licensed](./LICENSE).
 
-
 <!-- ## 🔗 Links -->
 
-
-----
-
+---
 
 ## 🏗️ Scaffold
 
@@ -75,7 +66,7 @@ $ py manage.py startapp api
 $ pdm add djangorestframework, djangorestframework-simplejwt, mysqlclient
 ```
 
-## 🛠️ `settings.py`
+## ⚙️ `settings.py`
 
 ```py
 # Application definition

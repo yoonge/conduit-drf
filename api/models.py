@@ -1,8 +1,10 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
+
 class User(AbstractUser):
-    """ User Table """
+    """User Table"""
+
     date_joined = None
     first_name = None
     last_name = None
@@ -46,7 +48,8 @@ class User(AbstractUser):
 
 
 class Topic(models.Model):
-    """ Topic Table """
+    """Topic Table"""
+
     _id = models.AutoField("id", primary_key=True)
     content = models.TextField("content")
     create_at = models.DateTimeField("create at", auto_now_add=True)
@@ -64,8 +67,10 @@ class Topic(models.Model):
     def __str__(self) -> str:
         return self.title
 
+
 class Tag(models.Model):
-    """ Tag Table """
+    """Tag Table"""
+
     _id = models.AutoField("id", primary_key=True)
     create_at = models.DateTimeField("create at", auto_now_add=True)
     tag = models.CharField("tag", max_length=128)
@@ -78,12 +83,16 @@ class Tag(models.Model):
     def __str__(self) -> str:
         return self.tag
 
+
 class Comment(models.Model):
-    """ Comment Table """
+    """Comment Table"""
+
     _id = models.AutoField("id", primary_key=True)
     content = models.TextField("content")
     create_at = models.DateTimeField("create at", auto_now_add=True)
-    topic = models.ForeignKey(to="Topic", to_field="_id", related_name="comments", on_delete=models.CASCADE)
+    topic = models.ForeignKey(
+        to="Topic", to_field="_id", related_name="comments", on_delete=models.CASCADE
+    )
     user = models.ForeignKey(to="User", to_field="_id", on_delete=models.CASCADE)
 
     class Meta:
