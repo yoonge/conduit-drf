@@ -1,4 +1,4 @@
-# ⌨️ Conduit DRF(Django REST Framework)
+# ⌨️ Conduit DRF (Django REST Framework)
 
 ![version](https://img.shields.io/badge/version-0.2.0-green) [![license](https://img.shields.io/badge/license-MIT-blue)](./LICENSE) ![django](https://img.shields.io/badge/django-4.2.11-113229) ![python](https://img.shields.io/badge/python-%3E%3D3.12.3-3776ab) ![mysql](https://img.shields.io/badge/mysql-8.3.0-02758f) ![pdm](https://img.shields.io/badge/pdm-2.15.1-ac75d7)
 

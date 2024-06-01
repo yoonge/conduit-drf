@@ -2,6 +2,7 @@ from typing import Any, Dict
 from rest_framework.serializers import (
     CharField,
     ModelSerializer,
+    PrimaryKeyRelatedField,
     StringRelatedField,
     ValidationError,
 )
@@ -29,7 +30,7 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 
 class UserReadSerializer(HookSerializer, ModelSerializer):
-    favorites = StringRelatedField(many=True)
+    favorites = PrimaryKeyRelatedField(many=True, read_only=True)
 
     class Meta:
         model = User
