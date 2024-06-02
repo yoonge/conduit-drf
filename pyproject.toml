@@ -1,7 +1,7 @@
 [project]
 name = "conduit-drf"
 version = "0.1.0"
-description = "Django project template managed by PDM"
+description = "Exemplary back-end Medium.com clone (called Conduit) in Python, built with Django + DRF + MySQL + MySQLClient + SimpleJWT, managed by PDM."
 authors = [{ name = "Svelte", email = "dev.yoonge@gmail.com" }]
 dependencies = [
     "django~=4.2",

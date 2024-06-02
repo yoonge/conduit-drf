@@ -26,7 +26,8 @@ from api.utils.permisson import IsAdminOrOwner, IsAdminOrSelf
 @permission_classes((IsAuthenticatedOrReadOnly,))
 def api_root(request, format=None):
     """
-    API root.
+    API root:
+    Return a list of most APIs.
     """
     return Response(
         [
@@ -34,6 +35,7 @@ def api_root(request, format=None):
             {"topic-detail": "http://localhost:8000/api/topic/1/"},
             {"topic-favor": "http://localhost:8000/api/topic/1/favor/"},
             {"topic-comment": "http://localhost:8000/api/topic/1/comment/"},
+            {"my-settings": reverse("settings", request=request, format=format)},
             {"my-topics": reverse("my-own-topics", request=request, format=format)},
             {"my-favorites": reverse("my-favorite-topics", request=request, format=format)},
             {"users": reverse("user-list", request=request, format=format)},
@@ -80,7 +82,7 @@ class CommentViewSet(ViewSet):
     POST create:
     Create a new comment instance for the specified topic, example:
     {
-        "content": "This is a comment.",
+        "content": "This is a comment."
     }
 
     DELETE destroy:
@@ -253,7 +255,7 @@ class TopicViewSet(ViewSet):
         "content": "See how the exact same Medium.com clone (called Conduit) is built using different frontends and backends. Yes, you can mix and match them, because they all adhere to the same API spec",
         "tags": ["React", "API", "Conduit"],
         "title": "Welcome to RealWorld project",
-        "user": 1,
+        "user": 1
     }
     """
 
@@ -430,18 +432,28 @@ class UserViewSet(ViewSet):
         "email": "test@qq.com",
         "username": "test",
         "password": "123456"
-        "confirm_password": "123456",
+        "confirm_password": "123456"
     }
 
     PATCH partial_update:
     Partial update a user instance and return it, example:
     {
         "gender": 1,
-        "nickname": "Test",
+        "nickname": "Test"
     }
 
     DELETE destroy:
     Destroy a user instance.
+
+    GET get_settings:
+    Retrun the current user instance.
+
+    PUT put_settings:
+    Partial update the current user instance and return it, example:
+    {
+        "gender": 1,
+        "nickname": "Test"
+    }
     """
 
     def get_permissions(self):
@@ -497,7 +509,7 @@ class UserViewSet(ViewSet):
             }
         )
 
-    def partial_update(self, request, username):
+    def update(self, request, username):
         try:
             user = User.objects.get(username=username)
         except User.DoesNotExist:
@@ -531,3 +543,35 @@ class UserViewSet(ViewSet):
 
         user.delete()
         return Response({"code": status.HTTP_204_NO_CONTENT, "msg": "User delete succeed."})
+
+    def get_settings(self, request):
+        user = request.user
+        ser = UserReadSerializer(user)
+        return Response(
+            {
+                "code": status.HTTP_200_OK,
+                "data": ser.data,
+                "msg": "My settings query succeed.",
+            }
+        )
+
+    def put_settings(self, request):
+        user = request.user
+        ser = UserWriteSerializer(user, data=request.data, partial=True)
+        if not ser.is_valid():
+            return Response(
+                {
+                    "code": status.HTTP_400_BAD_REQUEST,
+                    "error": ser.errors,
+                    "msg": "User settings update failed.",
+                }
+            )
+
+        instance = ser.save()
+        return Response(
+            {
+                "code": status.HTTP_200_OK,
+                "data": UserReadSerializer(instance).data,
+                "msg": "My settings update succeed.",
+            }
+        )

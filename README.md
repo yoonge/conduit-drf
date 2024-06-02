@@ -4,7 +4,7 @@
 
 ## 💡 Introduction
 
-Realworld: "The mother of all demo apps" — Exemplary back-end Medium.com clone (called [Conduit](https://github.com/yoonge/conduit-drf)) in Python, built with Django + DRF + MySQL + MySQLClient + PDM.
+Realworld: "The mother of all demo apps" — Exemplary back-end Medium.com clone (called [Conduit](https://github.com/yoonge/conduit-drf)) in Python, built with Django + DRF + MySQL + MySQLClient + SimpleJWT.
 
 ![pdm-managed](https://img.shields.io/badge/pdm-managed-blueviolet)
 ![Django Badge](https://img.shields.io/badge/django-4?logo=django&labelColor=%23092E20&color=white)
@@ -34,6 +34,8 @@ $ pdm migrate
 $ pdm createsuperuser
 ```
 
+And then, open your browser and visit http://localhost:8000/api/
+
 <!-- ## 📁 Index -->
 
 <!-- ## ⚡ Features -->
@@ -57,7 +59,7 @@ $ mkdir conduit-drf && cd conduit-drf
 
 $ pdm init django
 
- # Activate the virtual environment
+# Activate the virtual environment
 $ source ./.venv/bin/activate   # MacOS
 $ ./.venv/Scripts/activate  # Windows
 
